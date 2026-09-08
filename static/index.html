@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMD Official Meteorological Decision Support & Early Warning Portal | MoES</title>
+    <meta name="description" content="Official Meteorological Advisory & Early-Warning Decision Support Portal. Ministry of Earth Sciences (MoES), India Meteorological Department (IMD) - SIH26068.">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gov: {
+                            blue: '#1e3a8a',      // Primary Deep Navy
+                            dark: '#0f2942',      // Header Dark
+                            accent: '#0284c7',    // Focus/Accent Blue
+                            saffron: '#FF9933',   // Tricolor Saffron
+                            green: '#138808',     // Tricolor Green
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', '-apple-system', 'BlinkMacSystemFont', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* Official Indian National Tricolor Top Stripe */
+        .gov-tricolor-bar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(to right, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
+        }
+
+        /* Clean Scrollbar */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Subtle Audio Bar Indicator */
+        @keyframes soundWave {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        .audio-wave-bar {
+            animation: soundWave 1s ease-in-out infinite;
+        }
+        .awb-1 { animation-delay: 0.1s; }
+        .awb-2 { animation-delay: 0.3s; }
+        .awb-3 { animation-delay: 0.5s; }
+        .awb-4 { animation-delay: 0.2s; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased">
+
+    <!-- Top Tricolor Accent Stripe -->
+    <div class="gov-tricolor-bar"></div>
+
+    <!-- Official Government Header -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <!-- National Portal Identity Bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            
+            <!-- Left Branding: Emblem & Department Titles -->
+            <div class="flex items-center space-x-3.5">
+                <!-- Official MoES / IMD Crest Badge -->
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-900 rounded border border-blue-950 flex items-center justify-center text-white shadow-sm">
+                    <i data-lucide="cloud-sun" class="w-7 h-7 stroke-[1.75]"></i>
+                </div>
+
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">भारत सरकार | Government of India</span>
+                        <span class="text-slate-300">|</span>
+                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">पृथ्वी विज्ञान मंत्रालय | MoES</span>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                        भारत मौसम विज्ञान विभाग / India Meteorological Department (IMD)
+                    </h1>
+                    <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                        <span>Meteorological Advisory & Early-Warning Decision Support System</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+                            SIH26068
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Telemetry & Official Clock -->
+            <div class="flex items-center justify-between md:justify-end space-x-4 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
+                <div class="flex flex-col items-start md:items-end">
+                    <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                        IMD Live Telemetry Feed
+                    </div>
+                    <div class="text-xs font-mono font-bold text-slate-800" id="liveClockIst">
+                        IST: --:--:-- IST
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500" id="liveClockUtc">
+                        UTC: --:--:-- UTC
+                    </div>
+                </div>
+
+                <button id="refreshBtn" onclick="fetchWeatherData()" class="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition border border-slate-300" title="Refresh Telemetry" aria-label="Refresh Observation">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Operational Dashboard Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Operational Filter & Dynamic Geocoding Query Section -->
+        <section class="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-5">
+            <div class="border-b border-slate-200 pb-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-900"></i>
+                        Dynamic Location Geocoding & Telemetry Ingestion
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Search ANY district, city, sub-division, or pincode across India for real-time IMD decision support.</p>
+                </div>
+                <div class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 self-start sm:self-auto">
+                    <i data-lucide="satellite" class="w-3.5 h-3.5 text-blue-800"></i>
+                    <span>Open-Meteo High-Resolution Engine</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                
+                <!-- Target District / Open Location Search Input -->
+                <div class="md:col-span-6 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label for="locationInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                            Target District, City, or Pincode
+                        </label>
+                        <span id="voiceSearchStatus" class="hidden text-[11px] font-medium text-red-600 animate-pulse items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                            <span id="voiceSearchStatusText">Listening... Speak district name</span>
+                        </span>
+                    </div>
+                    <div class="relative flex items-center">
+                        <input 
+                            type="text" 
+                            id="locationInput" 
+                            list="districtSuggestions"
+                            value="Bhubaneswar"
+                            placeholder="Enter any Indian district (e.g. Bhubaneswar, Cuttack, Puri, Delhi, Pune, 751024)..." 
+                            class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-l pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium"
+                        >
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none"></i>
+                        <button 
+                            type="button" 
+                            id="voiceSearchBtn" 
+                            onclick="toggleVoiceSearch()" 
+                            class="h-10 px-3 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-900 border-t border-r border-b border-slate-300 rounded-r flex items-center justify-center gap-1.5 transition text-xs font-semibold flex-shrink-0"
+                            title="Voice Search via Bhashini Indic Speech Recognition"
+                            aria-label="Voice Search"
+                        >
+                            <i id="micIcon" data-lucide="mic" class="w-4 h-4 text-blue-900"></i>
+                            <span id="micBtnText" class="hidden sm:inline">Voice Search</span>
+                        </button>
+                        <datalist id="districtSuggestions">
+                            <option value="Bhubaneswar, Odisha">
+                            <option value="Cuttack, Odisha">
+                            <option value="Puri, Odisha">
+                            <option value="Paradip, Odisha">
+                            <option value="Balasore, Odisha">
+                            <option value="Sambalpur, Odisha">
+                            <option value="Berhampur, Odisha">
+                            <option value="Rourkela, Odisha">
+                            <option value="Koraput, Odisha">
+                            <option value="Delhi">
+                            <option value="Mumbai, Maharashtra">
+                            <option value="Kolkata, West Bengal">
+                            <option value="Chennai, Tamil Nadu">
+                            <option value="Bengaluru, Karnataka">
+                            <option value="Hyderabad, Telangana">
+                            <option value="Ahmedabad, Gujarat">
+                            <option value="Visakhapatnam, Andhra Pradesh">
+                            <option value="Kochi, Kerala">
+                            <option value="Guwahati, Assam">
+                            <option value="Shimla, Himachal Pradesh">
+                            <option value="Patna, Bihar">
+                            <option value="Lucknow, Uttar Pradesh">
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Advisory Language Selector -->
+                <div class="md:col-span-3 space-y-1.5">
+                    <label for="langSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Advisory Language
+                    </label>
+                    <select id="langSelect" onchange="onLanguageChange(this.value)" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
+                        <option value="en" selected>English (Official Standard)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="or">ଓଡ଼ିଆ (Odia)</option>
+                    </select>
+                </div>
+
+                <!-- Primary Action Button -->
+                <div class="md:col-span-3">
+                    <button id="queryBtn" onclick="fetchWeatherData()" class="w-full h-11 bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-sm rounded px-4 py-2.5 flex items-center justify-center gap-2 shadow-sm transition-colors duration-150">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span id="queryBtnText">Fetch Official Bulletin</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick District Access Chips -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+                <span class="text-slate-500 font-semibold uppercase tracking-wider text-[11px] flex items-center gap-1">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-600"></i>
+                    Quick Hotspots:
+                </span>
+                <button type="button" onclick="setCityAndQuery('Bhubaneswar')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Bhubaneswar</button>
+                <button type="button" onclick="setCityAndQuery('Cuttack')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Cuttack</button>
+                <button type="button" onclick="setCityAndQuery('Puri')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Puri</button>
+                <button type="button" onclick="setCityAndQuery('Paradip')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Paradip</button>
+                <button type="button" onclick="setCityAndQuery('Delhi')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Delhi</button>
+                <button type="button" onclick="setCityAndQuery('Mumbai')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Mumbai</button>
+                <button type="button" onclick="setCityAndQuery('Kolkata')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Kolkata</button>
+                <button type="button" onclick="setCityAndQuery('Chennai')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Chennai</button>
+            </div>
+        </section>
+
+        <!-- Official IMD / NDMA 4-Tier Disaster Warning Matrix Banner -->
+        <section id="alertBanner" class="bg-emerald-50 border border-emerald-300 rounded-lg p-4 sm:p-5 transition-colors duration-200 shadow-sm">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-start space-x-3.5">
+                    <div id="alertIconWrapper" class="p-2.5 rounded bg-emerald-700 text-white flex-shrink-0 mt-0.5">
+                        <i id="alertIcon" data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span id="alertBadge" class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-700 text-white">
+                                GREEN / NORMAL
+                            </span>
+                            <span id="alertHazardType" class="text-xs font-semibold text-emerald-900">
+                                IMD Deterministic Disaster Matrix
+                            </span>
+                        </div>
+                        <h3 id="alertTitle" class="text-base sm:text-lg font-bold text-emerald-950">
+                            GREEN ALERT (Normal Weather / No Warning)
+                        </h3>
+                        <p id="alertInstruction" class="text-xs sm:text-sm text-emerald-900 mt-1 leading-relaxed max-w-4xl">
+                            No adverse weather warning. Routine agricultural, marine, transportation, and daily commercial activities can proceed safely as scheduled.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white/85 border border-emerald-200 rounded p-3 text-right self-stretch md:self-auto flex-shrink-0">
+                    <div class="text-[11px] font-semibold uppercase text-slate-500">Threshold Trigger Telemetry</div>
+                    <div class="text-xs font-mono font-bold text-slate-800 mt-0.5" id="alertTriggers">Wind: -- km/h | Rain: -- mm</div>
+                    <div class="text-[10px] text-slate-500 font-sans mt-0.5">IMD / NDMA 4-Tier Protocol</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Meteorological Metric Grid (4 Standard IMD Telemetry Cards) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Surface Temperature -->
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Surface Temperature</span>
+                    <i data-lucide="thermometer" class="w-4 h-4 text-blue-800"></i>
+                </div>
+                <div class="flex items-baseline space-x-1.5">
+                    <span id="tempValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                    <span class="text-slate-600 font-semibold text-lg">°C</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span>Apparent (Heat Index): <strong id="apparentTempValue" class="font-mono text-slate-800">--°C</strong></span>
+                </div>
+                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Sky Condition:</span>
+                    <span id="conditionTag" class="font-semibold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded text-[11px] border border-blue-200">Clear</span>
+                </div>
+            </div>
+
+            <!-- Wind Velocity & Direction -->
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Wind Velocity (10m)</span>
+                    <i data-lucide="wind" class="w-4 h-4 text-blue-800"></i>
+                </div>
+                <div class="flex items-baseline space-x-1.5">
+                    <span id="windSpeedValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                    <span class="text-slate-600 font-semibold text-sm">km/h</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span>Peak Gusts: <strong id="windGustsValue" class="font-mono text-slate-800">-- km/h</strong></span>
+                </div>
+                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Azimuth / Direction:</span>
+                    <span id="windDirValue" class="font-mono font-semibold text-slate-800">--°</span>
+                </div>
+            </div>
+
+            <!-- 24h Precipitation & Accumulation -->
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">24h Precipitation</span>
+                    <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-800"></i>
+                </div>
+                <div class="flex items-baseline space-x-1.5">
+                    <span id="precipValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                    <span class="text-slate-600 font-semibold text-sm">mm</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span>Cumulative Total: <strong id="dailyRainValue" class="font-mono text-slate-800">-- mm</strong></span>
+                </div>
+                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Rainfall Intensity:</span>
+                    <span id="rainIntensityTag" class="font-semibold text-slate-800 text-[11px]">Nil / Dry</span>
+                </div>
+            </div>
+
+            <!-- Relative Humidity & Zone Status -->
+            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Relative Humidity</span>
+                    <i data-lucide="droplets" class="w-4 h-4 text-blue-800"></i>
+                </div>
+                <div class="flex items-baseline space-x-1.5">
+                    <span id="humidityValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                    <span class="text-slate-600 font-semibold text-lg">%</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span>Geographic Zone:</span>
+                    <span id="coastalTag" class="font-semibold text-slate-800 truncate max-w-[120px]">Inland Plains</span>
+                </div>
+                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                    <span>Observatory Station:</span>
+                    <span id="stationCityState" class="font-medium text-slate-700 truncate max-w-[130px]">Bhubaneswar</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Two Operational Directive Panels (Agro-Meteorological & Marine/Fishermen) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Panel 1: Agro-Meteorological Advisory (Agromet) -->
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-1.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <i data-lucide="sprout" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm">Agro-Meteorological Advisory (Agromet)</h3>
+                            <p class="text-xs text-slate-500">ICAR & IMD Agricultural Decision Support</p>
+                        </div>
+                    </div>
+                    <span id="agroSprayBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        OPTIMAL
+                    </span>
+                </div>
+
+                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                    <!-- Spraying Protocol -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="spray-can" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Pesticide & Foliar Spraying Protocol
+                        </div>
+                        <p id="agroSprayDesc" class="text-slate-700 leading-relaxed">
+                            Loading agricultural parameters...
+                        </p>
+                    </div>
+
+                    <!-- Irrigation Directive -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="waves" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Irrigation & Soil Moisture Management
+                        </div>
+                        <p id="agroIrrigationDesc" class="text-slate-700 leading-relaxed">
+                            Loading irrigation advisory...
+                        </p>
+                    </div>
+
+                    <!-- Harvesting & Storage Directive -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="wheat" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Crop Harvesting & Post-Harvest Storage
+                        </div>
+                        <p id="agroHarvestDesc" class="text-slate-700 leading-relaxed">
+                            Loading harvest instructions...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                    <span>Protocol: <strong>Gramin Krishi Mausam Sewa (GKMS)</strong></span>
+                    <span class="text-emerald-700 font-semibold">ICAR / IMD Certified</span>
+                </div>
+            </div>
+
+            <!-- Panel 2: Marine & Coastal Fishermen Directive -->
+            <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
+                            <i data-lucide="anchor" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm">Marine & Fishermen Coastal Directive</h3>
+                            <p class="text-xs text-slate-500">INCOIS & IMD Coastal Safety Protocols</p>
+                        </div>
+                    </div>
+                    <span id="coastalVentureBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        SAFE FOR SEA
+                    </span>
+                </div>
+
+                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                    <!-- Sea State & Squall Forecast -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="compass" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Sea State & Coastal Squall Condition
+                        </div>
+                        <p id="coastalSeaState" class="text-slate-700 leading-relaxed">
+                            Loading maritime observations...
+                        </p>
+                    </div>
+
+                    <!-- Venturing Directive -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Deep-Sea & Artisanal Venturing Clearance
+                        </div>
+                        <p id="coastalDirective" class="text-slate-700 leading-relaxed">
+                            Loading fishermen safety guidelines...
+                        </p>
+                    </div>
+
+                    <!-- Coastal Zone Status -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="text-slate-500">Classification:</span>
+                            <strong id="coastalFlagText" class="text-slate-800 ml-1">Inland District</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Maritime Authority:</span>
+                            <strong class="text-blue-900 ml-1">IMD / INCOIS Ocean Services</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                    <span>Maritime Protocol: <strong>Bay of Bengal / Arabian Sea Matrix</strong></span>
+                    <span class="text-blue-900 font-semibold">Port & Coast Guard Clearance</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Synthesized Official Meteorological Bulletin with Text-To-Speech (TTS) -->
+        <section class="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 rounded bg-slate-100 text-slate-800 border border-slate-300">
+                        <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                            Synthesized Meteorological Bulletin
+                            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
+                                Ground Truth
+                            </span>
+                        </h3>
+                        <p class="text-xs text-slate-500" id="timestampText">Synchronizing latest official meteorological bulletin...</p>
+                    </div>
+                </div>
+
+                <!-- Web Speech API Audio Controls -->
+                <div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded border border-slate-200 self-start sm:self-center">
+                    <!-- Audio Wave Indicator -->
+                    <div id="audioWave" class="hidden items-center space-x-1 px-2 h-6">
+                        <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-1"></div>
+                        <div class="w-1 bg-blue-700 rounded-full audio-wave-bar awb-2"></div>
+                        <div class="w-1 bg-blue-600 rounded-full audio-wave-bar awb-3"></div>
+                        <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-4"></div>
+                    </div>
+
+                    <!-- TTS Action Buttons -->
+                    <button id="ttsPlayBtn" onclick="speakAdvisory()" class="px-3 py-1.5 rounded bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm">
+                        <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                        <span id="ttsBtnText">Play Audio Bulletin</span>
+                    </button>
+                    <button id="ttsPauseBtn" onclick="togglePauseTTS()" class="hidden p-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition" title="Pause / Resume" aria-label="Pause or Resume Audio">
+                        <i id="ttsPauseIcon" data-lucide="pause" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="ttsStopBtn" onclick="stopTTS()" class="hidden p-1.5 rounded bg-white hover:bg-red-50 text-red-700 hover:text-red-800 border border-slate-300 transition" title="Stop Audio" aria-label="Stop Audio">
+                        <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="copyBulletinText()" class="p-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition" title="Copy Bulletin to Clipboard" aria-label="Copy Bulletin">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Monospace Official Bulletin Display -->
+            <div class="mt-4">
+                <div class="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-line select-text border border-slate-800" id="conversationalBox">
+                    Connecting to IMD Meteorological Engine... Fetching official observations...
+                </div>
+            </div>
+
+            <!-- Authority Attribution Footer -->
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                <span id="attributionSource">Data Authority: Ministry of Earth Sciences (MoES) / IMD Deterministic Rule Engine / Open-Meteo High-Resolution Grid</span>
+                <span id="speechAttribution" class="font-medium text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                    Audio Engine: Bhashini Indic Speech-to-Speech (ASR & TTS)
+                </span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Official Government Portal Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs border-t border-slate-800 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded bg-blue-900 border border-blue-700 flex items-center justify-center text-white font-bold text-xs">
+                        IMD
+                    </div>
+                    <div>
+                        <div class="text-slate-200 font-semibold text-sm">
+                            WeatherGPT Early-Warning & Decision Support System
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Smart India Hackathon Prototype (Problem Statement ID: SIH26068)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-slate-400 text-[11px] text-center md:text-right">
+                    Under the mandate of <strong>Ministry of Earth Sciences (MoES)</strong> & <strong>National Disaster Management Authority (NDMA)</strong>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500">
+                <p>© 2026 India Meteorological Department (IMD) / Ministry of Earth Sciences, Govt. of India. All Rights Reserved.</p>
+                <p>Autonomous Meteorological Rule-Based Decision Support System</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Frontend Core Application Script -->
+    <script>
+        // State Management
+        let currentLocation = "Bhubaneswar";
+        let currentLanguage = "en";
+        let latestApiResponse = null;
+
+        // Bhashini & Web Speech TTS State
+        let currentAudioElement = null; // HTML5 Audio instance for Bhashini wav/mp3
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null; // Web Speech API utterance instance
+        let isSpeaking = false;
+        let isPaused = false;
+        let currentAudioSource = "none"; // "bhashini" | "web_speech" | "none"
+
+        // Bhashini & Browser Voice Search (ASR) State
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecordingVoice = false;
+        let recordingTimeoutId = null;
+        let browserRecognition = null;
+
+        // Initialize Lucide Icons, Clocks & Initial Load
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            startLiveClocks();
+            initBrowserSpeechRecognition();
+            fetchWeatherData();
+        });
+
+        // Dual Real-time UTC and IST Live Digital Clock
+        function startLiveClocks() {
+            function updateClock() {
+                const now = new Date();
+
+                // Format IST (UTC+5:30)
+                const istOptions = { 
+                    timeZone: "Asia/Kolkata", 
+                    hour12: false, 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                };
+                const istString = now.toLocaleString("en-IN", istOptions);
+                const istEl = document.getElementById("liveClockIst");
+                if (istEl) istEl.textContent = `IST: ${istString} IST`;
+
+                // Format UTC
+                const utcOptions = { 
+                    timeZone: "UTC", 
+                    hour12: false, 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                };
+                const utcString = now.toLocaleString("en-GB", utcOptions);
+                const utcEl = document.getElementById("liveClockUtc");
+                if (utcEl) utcEl.textContent = `UTC: ${utcString} UTC`;
+            }
+
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Enter key support on search input
+        document.getElementById("locationInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                fetchWeatherData();
+            }
+        });
+
+        // Quick Preset Button Handler
+        function setCityAndQuery(cityName) {
+            document.getElementById("locationInput").value = cityName;
+            fetchWeatherData();
+        }
+
+        // Language Dropdown Change Handler
+        function onLanguageChange(lang) {
+            currentLanguage = lang;
+            fetchWeatherData();
+        }
+
+        // Copy Bulletin Content to Clipboard
+        function copyBulletinText() {
+            const text = document.getElementById("conversationalBox").innerText;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Official Bulletin copied to clipboard.");
+            }).catch(err => {
+                console.warn("Clipboard copy failed:", err);
+            });
+        }
+
+        // Main Fetch Weather Data Function
+        async function fetchWeatherData() {
+            stopTTS();
+            const inputVal = document.getElementById("locationInput").value.trim();
+            const queryTarget = inputVal || "Bhubaneswar";
+            currentLocation = queryTarget;
+
+            const queryBtn = document.getElementById("queryBtn");
+            const queryBtnText = document.getElementById("queryBtnText");
+            const refreshBtn = document.getElementById("refreshBtn");
+            
+            // Loading State UI
+            queryBtn.disabled = true;
+            queryBtn.classList.add("opacity-75", "cursor-not-allowed");
+            queryBtnText.textContent = "Geocoding & Ingesting...";
+            refreshBtn.classList.add("animate-spin");
+
+            try {
+                const response = await fetch("/api/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        location: queryTarget,
+                        language: currentLanguage
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    const detail = errData.detail || `Server responded with HTTP ${response.status}`;
+                    throw new Error(detail);
+                }
+
+                const data = await response.json();
+                latestApiResponse = data;
+                renderDashboard(data);
+            } catch (err) {
+                console.error("Error fetching weather data:", err);
+                document.getElementById("conversationalBox").textContent = 
+                    `[IMD COMMUNIQUE ERROR] Failed to fetch meteorological telemetry for location '${queryTarget}'.\nReason: ${err.message}\n\nPlease verify that the location is a valid Indian district, city, or pincode.`;
+            } finally {
+                queryBtn.disabled = false;
+                queryBtn.classList.remove("opacity-75", "cursor-not-allowed");
+                queryBtnText.textContent = "Fetch Official Bulletin";
+                refreshBtn.classList.remove("animate-spin");
+            }
+        }
+
+        // Render Dashboard with Official IMD / Government Styling
+        function renderDashboard(data) {
+            const telemetry = data.telemetry;
+            const alert = data.alert;
+            const agro = data.agro_advisory;
+            const coastal = data.coastal_advisory;
+            const multi = data.multilingual;
+
+            // 1. Update Key Meteorological Metric Grid
+            document.getElementById("tempValue").textContent = telemetry.temperature_c.toFixed(1);
+            document.getElementById("apparentTempValue").textContent = `${telemetry.apparent_temperature_c.toFixed(1)}°C`;
+            document.getElementById("conditionTag").textContent = telemetry.condition;
+            
+            document.getElementById("windSpeedValue").textContent = telemetry.wind_speed_kmh.toFixed(1);
+            document.getElementById("windGustsValue").textContent = `${telemetry.wind_gusts_kmh.toFixed(1)} km/h`;
+            document.getElementById("windDirValue").textContent = `${telemetry.wind_direction_deg}°`;
+            
+            document.getElementById("precipValue").textContent = telemetry.precipitation_mm.toFixed(1);
+            document.getElementById("dailyRainValue").textContent = `${telemetry.daily_rain_total_mm.toFixed(1)} mm`;
+            
+            // Rainfall Intensity Label
+            const rainIntensity = document.getElementById("rainIntensityTag");
+            if (telemetry.daily_rain_total_mm >= 64.5 || telemetry.precipitation_mm >= 64.5) {
+                rainIntensity.textContent = "Extremely Heavy / Flooding";
+                rainIntensity.className = "font-bold text-red-700 text-[11px]";
+            } else if (telemetry.daily_rain_total_mm >= 35.5 || telemetry.precipitation_mm >= 35.5) {
+                rainIntensity.textContent = "Heavy Rain";
+                rainIntensity.className = "font-bold text-orange-700 text-[11px]";
+            } else if (telemetry.daily_rain_total_mm >= 15.5 || telemetry.precipitation_mm >= 15.5) {
+                rainIntensity.textContent = "Moderate Rain";
+                rainIntensity.className = "font-bold text-amber-700 text-[11px]";
+            } else if (telemetry.daily_rain_total_mm > 0.0 || telemetry.precipitation_mm > 0.0) {
+                rainIntensity.textContent = "Light Rain / Drizzle";
+                rainIntensity.className = "font-semibold text-blue-800 text-[11px]";
+            } else {
+                rainIntensity.textContent = "Nil / Dry";
+                rainIntensity.className = "font-semibold text-slate-700 text-[11px]";
+            }
+
+            document.getElementById("humidityValue").textContent = telemetry.humidity_percent;
+            document.getElementById("coastalTag").textContent = data.coastal_proximity;
+            document.getElementById("stationCityState").textContent = `${data.city}, ${data.state}`;
+
+            // 2. Update IMD 4-Tier Disaster Warning Matrix
+            const alertBanner = document.getElementById("alertBanner");
+            const alertBadge = document.getElementById("alertBadge");
+            const alertTitle = document.getElementById("alertTitle");
+            const alertInstruction = document.getElementById("alertInstruction");
+            const alertHazard = document.getElementById("alertHazardType");
+            const alertIcon = document.getElementById("alertIcon");
+            const alertIconWrapper = document.getElementById("alertIconWrapper");
+            const alertTriggers = document.getElementById("alertTriggers");
+
+            alertTitle.textContent = multi.alert_title;
+            alertInstruction.textContent = multi.alert_instructions;
+            alertHazard.textContent = `IMD Hazard: ${alert.hazard_type}`;
+            alertTriggers.textContent = `Wind: ${alert.wind_trigger_val} km/h | Rain: ${alert.rain_trigger_val} mm`;
+            alertBadge.textContent = alert.badge_text;
+
+            // Apply Crisp Government Alert Badges & Borders
+            if (alert.level === "RED") {
+                alertBanner.className = "bg-red-50 border-2 border-red-500 rounded-lg p-4 sm:p-5 transition-colors duration-200 shadow-sm";
+                alertBadge.className = "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-700 text-white";
+                alertIconWrapper.className = "p-2.5 rounded bg-red-700 text-white flex-shrink-0 mt-0.5";
+                alertTitle.className = "text-base sm:text-lg font-bold text-red-950";
+                alertInstruction.className = "text-xs sm:text-sm text-red-900 mt-1 leading-relaxed max-w-4xl font-medium";
+                alertHazard.className = "text-xs font-semibold text-red-900";
+                alertIcon.setAttribute("data-lucide", "alert-triangle");
+            } else if (alert.level === "ORANGE") {
+                alertBanner.className = "bg-orange-50 border-2 border-orange-500 rounded-lg p-4 sm:p-5 transition-colors duration-200 shadow-sm";
+                alertBadge.className = "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-600 text-white";
+                alertIconWrapper.className = "p-2.5 rounded bg-orange-600 text-white flex-shrink-0 mt-0.5";
+                alertTitle.className = "text-base sm:text-lg font-bold text-orange-950";
+                alertInstruction.className = "text-xs sm:text-sm text-orange-900 mt-1 leading-relaxed max-w-4xl font-medium";
+                alertHazard.className = "text-xs font-semibold text-orange-900";
+                alertIcon.setAttribute("data-lucide", "alert-circle");
+            } else if (alert.level === "YELLOW") {
+                alertBanner.className = "bg-amber-50 border-2 border-amber-400 rounded-lg p-4 sm:p-5 transition-colors duration-200 shadow-sm";
+                alertBadge.className = "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-600 text-white";
+                alertIconWrapper.className = "p-2.5 rounded bg-amber-600 text-white flex-shrink-0 mt-0.5";
+                alertTitle.className = "text-base sm:text-lg font-bold text-amber-950";
+                alertInstruction.className = "text-xs sm:text-sm text-amber-900 mt-1 leading-relaxed max-w-4xl";
+                alertHazard.className = "text-xs font-semibold text-amber-900";
+                alertIcon.setAttribute("data-lucide", "info");
+            } else {
+                // GREEN
+                alertBanner.className = "bg-emerald-50 border border-emerald-300 rounded-lg p-4 sm:p-5 transition-colors duration-200 shadow-sm";
+                alertBadge.className = "px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-700 text-white";
+                alertIconWrapper.className = "p-2.5 rounded bg-emerald-700 text-white flex-shrink-0 mt-0.5";
+                alertTitle.className = "text-base sm:text-lg font-bold text-emerald-950";
+                alertInstruction.className = "text-xs sm:text-sm text-emerald-900 mt-1 leading-relaxed max-w-4xl";
+                alertHazard.className = "text-xs font-semibold text-emerald-900";
+                alertIcon.setAttribute("data-lucide", "shield-check");
+            }
+
+            // 3. Agro-Meteorological Advisory (Agromet)
+            const sprayBadge = document.getElementById("agroSprayBadge");
+            sprayBadge.textContent = agro.spraying_status;
+            if (agro.spraying_status === "OPTIMAL") {
+                sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
+            } else if (agro.spraying_status === "CAUTION") {
+                sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
+            } else {
+                sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
+            }
+
+            const lang = currentLanguage;
+            document.getElementById("agroSprayDesc").textContent = 
+                lang === 'hi' ? agro.spraying_desc_hi : (lang === 'or' ? agro.spraying_desc_or : agro.spraying_desc_en);
+            document.getElementById("agroIrrigationDesc").textContent = 
+                lang === 'hi' ? agro.irrigation_hi : (lang === 'or' ? agro.irrigation_or : agro.irrigation_en);
+            document.getElementById("agroHarvestDesc").textContent = 
+                lang === 'hi' ? (agro.harvesting_hi || agro.harvest_hi) : (lang === 'or' ? (agro.harvesting_or || agro.harvest_or) : (agro.harvesting_en || agro.harvest_en));
+
+            // 4. Coastal & Marine Fishermen Advisory
+            const ventureBadge = document.getElementById("coastalVentureBadge");
+            ventureBadge.textContent = coastal.status;
+            if (coastal.status === "SAFE") {
+                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
+            } else if (coastal.status === "CAUTION") {
+                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
+            } else if (coastal.status === "WARNING") {
+                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300";
+            } else {
+                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
+            }
+
+            document.getElementById("coastalSeaState").textContent = 
+                lang === 'hi' ? coastal.sea_state_hi : (lang === 'or' ? coastal.sea_state_or : coastal.sea_state_en);
+            document.getElementById("coastalDirective").textContent = 
+                lang === 'hi' ? coastal.advisory_hi : (lang === 'or' ? coastal.advisory_or : coastal.advisory_en);
+            document.getElementById("coastalFlagText").textContent = data.is_coastal ? `Coastal Marine Belt (${data.state})` : `Inland District (${data.state})`;
+
+            // 5. Official Monospace Synthesized Bulletin
+            document.getElementById("conversationalBox").textContent = multi.narrative;
+            document.getElementById("timestampText").textContent = `Official Dispatch: ${new Date(data.timestamp).toLocaleString()} • Coordinates: ${data.coordinates.latitude.toFixed(2)}°N, ${data.coordinates.longitude.toFixed(2)}°E • Elevation: ~${data.elevation.toFixed(0)}m`;
+
+            // Reset attribution label to ready state
+            document.getElementById("speechAttribution").textContent = "Audio Engine: Bhashini Indic Speech-to-Speech (ASR & TTS)";
+
+            // Refresh Lucide Icons in dynamically rendered elements
+            lucide.createIcons();
+        }
+
+        // =========================================================================
+        // BHASHINI SPEECH-TO-SPEECH (TTS & ASR) IMPLEMENTATION WITH RESILIENT FALLBACK
+        // =========================================================================
+
+        /**
+         * Clean and normalize raw bulletin text for natural speech prosody:
+         * 1. Strips markdown tokens (*, #, _, `, ~, >), dividers (━, ---, ===), and bullet points (•, -).
+         * 2. Strips emojis and technical brackets so speech engine doesn't read symbol names.
+         * 3. Expands meteorological units and abbreviations (km/h, °C, mm, %, IMD, MoES, NDMA, ICAR)
+         *    into phonetically smooth spoken words tailored to English, Hindi, and Odia.
+         */
+        function normalizeTextForSpeech(rawText, lang = "en") {
+            if (!rawText) return "";
+
+            let text = rawText;
+
+            // 1. Strip Markdown, Dividers, Emojis, and Punctuation Artifacts
+            text = text
+                .replace(/[━═─_~]+/g, " ")                  // Strip box drawings and divider lines
+                .replace(/---+|===+/g, " ")
+                .replace(/[*#`>]+/g, " ")                   // Strip markdown formatting tokens
+                .replace(/[•\u2022\u25cf\u25cb\u25aa\u25ab]/g, " ") // Strip bullet points
+                .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, " ") // Strip emojis
+                .replace(/\[.*?\]/g, " ")                  // Strip bracketed text like [IMD ERROR]
+                .replace(/\(([^)]+)\)/g, ", $1, ");        // Replace parentheses with natural pause commas
+
+            // 2. Multilingual Unit & Abbreviation Expansion
+            if (lang === "hi") {
+                // Hindi phonetic replacements
+                text = text
+                    .replace(/\bkm\/h\b|\bkmph\b/gi, " किलोमीटर प्रति घंटा ")
+                    .replace(/°C|° C|deg C|degrees C/gi, " डिग्री सेल्सियस ")
+                    .replace(/°/g, " डिग्री ")
+                    .replace(/\bmm\b/gi, " मिलीमीटर ")
+                    .replace(/\bcm\b/gi, " सेंटीमीटर ")
+                    .replace(/\bm\b/gi, " मीटर ")
+                    .replace(/%/g, " प्रतिशत ")
+                    .replace(/\bhPa\b/gi, " हेक्टोपास्कल ")
+                    .replace(/\bIMD\b/g, " आई एम डी ")
+                    .replace(/\bMoES\b/g, " पृथ्वी विज्ञान मंत्रालय ")
+                    .replace(/\bNDMA\b/g, " एन डी एम ए ")
+                    .replace(/\bICAR\b/g, " आई सी ए आर ")
+                    .replace(/\bINCOIS\b/g, " इनकोइस ")
+                    .replace(/\bSIH\d+\b/gi, " ")
+                    .replace(/\bUTC\b/gi, " यू टी सी ")
+                    .replace(/\bIST\b/gi, " भारतीय मानक समय ");
+            } else if (lang === "or") {
+                // Odia phonetic replacements
+                text = text
+                    .replace(/\bkm\/h\b|\bkmph\b/gi, " କିଲୋମିଟର ପ୍ରତି ଘଣ୍ଟା ")
+                    .replace(/°C|° C|deg C|degrees C/gi, " ଡିଗ୍ରୀ ସେଲସିୟସ ")
+                    .replace(/°/g, " ଡିଗ୍ରୀ ")
+                    .replace(/\bmm\b/gi, " ମିଲିମିଟର ")
+                    .replace(/\bcm\b/gi, " ସେଣ୍ଟିମିଟର ")
+                    .replace(/\bm\b/gi, " ମିଟର ")
+                    .replace(/%/g, " ପ୍ରତିଶତ ")
+                    .replace(/\bhPa\b/gi, " ହେକ୍ଟୋପାସ୍କାଲ ")
+                    .replace(/\bIMD\b/g, " ଆଇ ଏମ୍ ଡି ")
+                    .replace(/\bMoES\b/g, " ପୃଥିବୀ ବିଜ୍ଞାନ ମନ୍ତ୍ରଣାଳୟ ")
+                    .replace(/\bNDMA\b/g, " ଏନ୍ ଡି ଏମ୍ ଏ ")
+                    .replace(/\bICAR\b/g, " ଆଇ ସି ଏ ଆର୍ ")
+                    .replace(/\bINCOIS\b/g, " ଇନକୋଇସ୍ ")
+                    .replace(/\bSIH\d+\b/gi, " ")
+                    .replace(/\bUTC\b/gi, " ୟୁ ଟି ସି ")
+                    .replace(/\bIST\b/gi, " ଭାରତୀୟ ମାନକ ସମୟ ");
+            } else {
+                // English phonetic replacements
+                text = text
+                    .replace(/\bkm\/h\b|\bkmph\b/gi, " kilometers per hour ")
+                    .replace(/°C|° C|deg C/gi, " degrees Celsius ")
+                    .replace(/°/g, " degrees ")
+                    .replace(/\bmm\b/gi, " millimeters ")
+                    .replace(/\bcm\b/gi, " centimeters ")
+                    .replace(/\bhPa\b/gi, " hectopascals ")
+                    .replace(/%/g, " percent ")
+                    .replace(/\bIMD\b/g, " I M D ")
+                    .replace(/\bMoES\b/g, " Ministry of Earth Sciences ")
+                    .replace(/\bNDMA\b/g, " N D M A ")
+                    .replace(/\bICAR\b/g, " I C A R ")
+                    .replace(/\bINCOIS\b/g, " I N C O I S ")
+                    .replace(/\bSIH\d+\b/gi, " ")
+                    .replace(/\bUTC\b/gi, " U T C ")
+                    .replace(/\bIST\b/gi, " Indian Standard Time ");
+            }
+
+            // 3. Clean up residual formatting, colons, and extra whitespace
+            text = text
+                .replace(/[:|]/g, " ")
+                .replace(/\s*-\s*/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            return text;
+        }
+
+        /**
+         * Dynamic Voice Selection Prioritizer:
+         * Iterates window.speechSynthesis.getVoices() and prioritizes high-fidelity natural/neural
+         * voices (e.g. Google UK/US, Microsoft Jenny/Aria/Madhur/Swara) over robotic desktop synthetics.
+         */
+        function selectOptimalVoice(lang = "en") {
+            const voices = speechSynth.getVoices() || [];
+            if (voices.length === 0) return null;
+
+            const targetLang = (lang || "en").toLowerCase();
+
+            // Ranked voice preference patterns
+            const englishPreferences = [
+                "microsoft jenny online (natural)",
+                "microsoft aria online (natural)",
+                "microsoft ryan online (natural)",
+                "microsoft guy online (natural)",
+                "google uk english female",
+                "google us english",
+                "google uk english male",
+                "google english",
+                "microsoft zira",
+                "microsoft mark",
+                "microsoft david",
+                "en-in",
+                "en_in",
+                "india",
+                "en-gb",
+                "en-us",
+                "english"
+            ];
+
+            const hindiPreferences = [
+                "google हिन्दी",
+                "google hindi",
+                "microsoft madhur online (natural)",
+                "microsoft swara online (natural)",
+                "microsoft madhur",
+                "microsoft swara",
+                "microsoft hemant",
+                "microsoft kalpana",
+                "hi-in",
+                "hi_in",
+                "hindi"
+            ];
+
+            const odiaPreferences = [
+                "odia",
+                "oriya",
+                "or-in",
+                "or_in",
+                "google हिन्दी",
+                "google hindi",
+                "microsoft madhur online (natural)",
+                "microsoft swara online (natural)",
+                "microsoft madhur",
+                "microsoft swara",
+                "hi-in",
+                "en-in"
+            ];
+
+            let preferences = englishPreferences;
+            let targetLocalePrefix = "en";
+
+            if (targetLang === "hi") {
+                preferences = hindiPreferences;
+                targetLocalePrefix = "hi";
+            } else if (targetLang === "or") {
+                preferences = odiaPreferences;
+                targetLocalePrefix = "or";
+            }
+
+            // 1. Search by ranked specific natural voice names
+            for (const pref of preferences) {
+                const found = voices.find(v => {
+                    const vName = v.name.toLowerCase();
+                    const vLang = v.lang.toLowerCase();
+                    return vName.includes(pref) || vLang === pref;
+                });
+                if (found) return found;
+            }
+
+            // 2. Search by matching locale prefix (e.g., 'hi', 'or', 'en')
+            const langMatch = voices.find(v => v.lang.toLowerCase().startsWith(targetLocalePrefix));
+            if (langMatch) return langMatch;
+
+            // 3. Indian accent regional fallback for authentic cadence
+            const indianVoice = voices.find(v => v.lang.toLowerCase().includes("in") || v.name.toLowerCase().includes("india"));
+            if (indianVoice) return indianVoice;
+
+            // 4. Default to first available voice
+            return voices[0] || null;
+        }
+
+        /**
+         * Main Speech Synthesizer Action:
+         * 1. If playing, handles pause / stop toggling.
+         * 2. Requests high-fidelity Indic neural TTS from Bhashini pipeline endpoint.
+         * 3. Plays base64 audio via HTML5 Audio object.
+         * 4. If Bhashini is unconfigured or times out, seamlessly falls back to acoustically-tuned Web Speech API.
+         */
+        async function speakAdvisory() {
+            if (!latestApiResponse || !latestApiResponse.multilingual) return;
+
+            // If already speaking, handle toggle
+            if (isSpeaking) {
+                if (isPaused) {
+                    resumeTTS();
+                } else {
+                    stopTTS();
+                }
+                return;
+            }
+
+            const rawScript = latestApiResponse.multilingual.tts_script || latestApiResponse.multilingual.narrative;
+            const targetLang = currentLanguage;
+            const cleanScript = normalizeTextForSpeech(rawScript, targetLang);
+
+            // UI: Show synthesizing indicator
+            const playBtn = document.getElementById("ttsPlayBtn");
+            const btnText = document.getElementById("ttsBtnText");
+            btnText.textContent = "Synthesizing Audio...";
+            playBtn.disabled = true;
+
+            try {
+                // 1. Call Backend Bhashini TTS Service
+                const response = await fetch("/api/voice/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        text: cleanScript,
+                        language: targetLang
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === "success" && data.audio_content && !data.fallback) {
+                        playBhashiniAudio(data.audio_content);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn("Bhashini TTS network request encountered exception, proceeding to Web Speech fallback:", err);
+            } finally {
+                playBtn.disabled = false;
+            }
+
+            // 2. Seamless Fallback: Acoustically-Tuned Browser Web Speech API
+            console.info("Activating client-side acoustically-tuned Web Speech API fallback.");
+            speakWithWebSpeech(cleanScript);
+        }
+
+        /**
+         * Play decoded Bhashini base64 audio stream via HTML5 Audio object.
+         */
+        function playBhashiniAudio(base64Data) {
+            stopTTS();
+            currentAudioSource = "bhashini";
+
+            const audioSrc = base64Data.startsWith("data:") 
+                ? base64Data 
+                : `data:audio/wav;base64,${base64Data}`;
+
+            currentAudioElement = new Audio(audioSrc);
+
+            currentAudioElement.onplay = () => {
+                isSpeaking = true;
+                isPaused = false;
+                updateTTSUI(true, "bhashini");
+            };
+
+            currentAudioElement.onended = () => {
+                isSpeaking = false;
+                isPaused = false;
+                currentAudioSource = "none";
+                updateTTSUI(false);
+            };
+
+            currentAudioElement.onerror = (e) => {
+                console.warn("Bhashini HTML5 Audio playback error:", e);
+                // Fallback to Web Speech API on decode error
+                const scriptText = latestApiResponse?.multilingual?.tts_script || "";
+                speakWithWebSpeech(normalizeTextForSpeech(scriptText, currentLanguage));
+            };
+
+            currentAudioElement.play().catch((err) => {
+                console.warn("HTML5 Audio play interrupted or blocked by browser autoplay policy:", err);
+                const scriptText = latestApiResponse?.multilingual?.tts_script || "";
+                speakWithWebSpeech(normalizeTextForSpeech(scriptText, currentLanguage));
+            });
+        }
+
+        /**
+         * Browser Web Speech API (SpeechSynthesis) Fallback with Acoustic Tuning:
+         * - rate = 0.92 (slower, authentic official bulletin pacing)
+         * - pitch = 0.98 (eliminates metallic/robotic high frequencies)
+         * - dynamic voice selection matching natural Indic & regional profiles
+         */
+        function speakWithWebSpeech(cleanScriptText) {
+            stopTTS();
+            currentAudioSource = "web_speech";
+
+            if (!('speechSynthesis' in window)) {
+                alert("Speech synthesis is not supported in this browser.");
+                updateTTSUI(false);
+                return;
+            }
+
+            const scriptToSpeak = cleanScriptText || normalizeTextForSpeech(
+                latestApiResponse?.multilingual?.tts_script || document.getElementById("conversationalBox").innerText,
+                currentLanguage
+            );
+
+            currentUtterance = new SpeechSynthesisUtterance(scriptToSpeak);
+            
+            // Set locale
+            const lang = currentLanguage;
+            if (lang === "hi") {
+                currentUtterance.lang = "hi-IN";
+            } else if (lang === "or") {
+                currentUtterance.lang = "hi-IN"; // Odia phonetic approximation fallback
+            } else {
+                currentUtterance.lang = "en-IN";
+            }
+
+            // Dynamic Voice Selection
+            const optimalVoice = selectOptimalVoice(lang);
+            if (optimalVoice) {
+                currentUtterance.voice = optimalVoice;
+                if (optimalVoice.lang) {
+                    currentUtterance.lang = optimalVoice.lang;
+                }
+            }
+
+            // Acoustic Tuning
+            currentUtterance.rate = 0.92;   // Steady administrative bulletin cadence
+            currentUtterance.pitch = 0.98;  // Warmer, natural tone removing metallic resonance
+
+            currentUtterance.onstart = () => {
+                isSpeaking = true;
+                isPaused = false;
+                updateTTSUI(true, "web_speech");
+            };
+
+            currentUtterance.onend = () => {
+                isSpeaking = false;
+                isPaused = false;
+                currentAudioSource = "none";
+                updateTTSUI(false);
+            };
+
+            currentUtterance.onerror = (e) => {
+                console.warn("SpeechSynthesis error:", e);
+                isSpeaking = false;
+                isPaused = false;
+                currentAudioSource = "none";
+                updateTTSUI(false);
+            };
+
+            speechSynth.speak(currentUtterance);
+        }
+
+        function resumeTTS() {
+            if (currentAudioSource === "bhashini" && currentAudioElement) {
+                currentAudioElement.play();
+                isPaused = false;
+                updateTTSUI(true, "bhashini");
+            } else if (currentAudioSource === "web_speech" && speechSynth) {
+                speechSynth.resume();
+                isPaused = false;
+                updateTTSUI(true, "web_speech");
+            }
+        }
+
+        function togglePauseTTS() {
+            if (!isSpeaking) return;
+
+            if (currentAudioSource === "bhashini" && currentAudioElement) {
+                if (currentAudioElement.paused) {
+                    currentAudioElement.play();
+                    isPaused = false;
+                    document.getElementById("ttsPauseIcon").setAttribute("data-lucide", "pause");
+                } else {
+                    currentAudioElement.pause();
+                    isPaused = true;
+                    document.getElementById("ttsPauseIcon").setAttribute("data-lucide", "play");
+                }
+            } else if (currentAudioSource === "web_speech" && speechSynth) {
+                if (speechSynth.paused) {
+                    speechSynth.resume();
+                    isPaused = false;
+                    document.getElementById("ttsPauseIcon").setAttribute("data-lucide", "pause");
+                } else {
+                    speechSynth.pause();
+                    isPaused = true;
+                    document.getElementById("ttsPauseIcon").setAttribute("data-lucide", "play");
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function stopTTS() {
+            if (currentAudioElement) {
+                currentAudioElement.pause();
+                currentAudioElement.currentTime = 0;
+                currentAudioElement = null;
+            }
+            if (speechSynth && speechSynth.speaking) {
+                speechSynth.cancel();
+            }
+            currentUtterance = null;
+            isSpeaking = false;
+            isPaused = false;
+            currentAudioSource = "none";
+            updateTTSUI(false);
+        }
+
+        function updateTTSUI(speaking, source = "bhashini") {
+            const wave = document.getElementById("audioWave");
+            const playBtn = document.getElementById("ttsPlayBtn");
+            const pauseBtn = document.getElementById("ttsPauseBtn");
+            const stopBtn = document.getElementById("ttsStopBtn");
+            const btnText = document.getElementById("ttsBtnText");
+            const attribution = document.getElementById("speechAttribution");
+
+            if (speaking) {
+                wave.classList.remove("hidden");
+                wave.classList.add("flex");
+                pauseBtn.classList.remove("hidden");
+                stopBtn.classList.remove("hidden");
+                btnText.textContent = "Playing Audio...";
+                playBtn.classList.replace("bg-[#1e3a8a]", "bg-blue-950");
+                if (attribution) {
+                    attribution.textContent = source === "bhashini" 
+                        ? "Audio Engine: Bhashini Indic Speech Synthesis (National AI Portal)" 
+                        : "Audio Engine: Web Speech API (Browser Fallback)";
+                }
+            } else {
+                wave.classList.add("hidden");
+                wave.classList.remove("flex");
+                pauseBtn.classList.add("hidden");
+                stopBtn.classList.add("hidden");
+                btnText.textContent = "Play Audio Bulletin";
+                playBtn.classList.replace("bg-blue-950", "bg-[#1e3a8a]");
+                document.getElementById("ttsPauseIcon").setAttribute("data-lucide", "pause");
+            }
+            lucide.createIcons();
+        }
+
+        // =========================================================================
+        // VOICE SEARCH (BHASHINI INDIC ASR + BROWSER FALLBACK)
+        // =========================================================================
+
+        /**
+         * Initialize Browser Web Speech Recognition fallback instance if supported.
+         */
+        function initBrowserSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                browserRecognition = new SpeechRecognition();
+                browserRecognition.continuous = false;
+                browserRecognition.interimResults = false;
+
+                browserRecognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.trim();
+                    if (transcript) {
+                        applyVoiceSearchResult(transcript, "browser_recognition");
+                    }
+                };
+
+                browserRecognition.onerror = (event) => {
+                    console.warn("Browser SpeechRecognition error:", event.error);
+                    stopVoiceSearchUI();
+                };
+
+                browserRecognition.onend = () => {
+                    stopVoiceSearchUI();
+                };
+            }
+        }
+
+        /**
+         * Toggle Voice Search: Start/Stop Audio Recording via MediaRecorder.
+         */
+        async function toggleVoiceSearch() {
+            if (isRecordingVoice) {
+                stopVoiceRecording();
+            } else {
+                await startVoiceRecording();
+            }
+        }
+
+        /**
+         * Request Microphone Access and start MediaRecorder capture.
+         */
+        async function startVoiceRecording() {
+            // Check for Web Audio MediaRecorder support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.info("MediaDevices not supported, attempting browser SpeechRecognition fallback.");
+                startBrowserRecognitionFallback();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+
+                // Detect supported mime type
+                let options = {};
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options = { mimeType: 'audio/webm;codecs=opus' };
+                } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    options = { mimeType: 'audio/webm' };
+                } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    options = { mimeType: 'audio/ogg' };
+                } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+                    options = { mimeType: 'audio/wav' };
+                }
+
+                mediaRecorder = new MediaRecorder(stream, options);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/wav' });
+                    await processRecordedAudio(audioBlob);
+                };
+
+                mediaRecorder.start(100);
+                isRecordingVoice = true;
+                startVoiceSearchUI();
+
+                // Auto-stop after 6 seconds of voice input
+                recordingTimeoutId = setTimeout(() => {
+                    if (isRecordingVoice) {
+                        stopVoiceRecording();
+                    }
+                }, 6000);
+
+            } catch (err) {
+                console.warn("Microphone access denied or failed, attempting browser recognition fallback:", err);
+                startBrowserRecognitionFallback();
+            }
+        }
+
+        function stopVoiceRecording() {
+            if (recordingTimeoutId) {
+                clearTimeout(recordingTimeoutId);
+                recordingTimeoutId = null;
+            }
+
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+            isRecordingVoice = false;
+        }
+
+        /**
+         * Convert recorded audio Blob to Base64 and send to Bhashini ASR endpoint.
+         */
+        async function processRecordedAudio(blob) {
+            const statusText = document.getElementById("voiceSearchStatusText");
+            if (statusText) statusText.textContent = "Transcribing with Bhashini Indic ASR...";
+
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const base64Audio = reader.result;
+                try {
+                    const response = await fetch("/api/voice/asr", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            audio: base64Audio,
+                            language: currentLanguage
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === "success" && data.text && data.text.trim()) {
+                            applyVoiceSearchResult(data.text, "bhashini_asr");
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Bhashini ASR request error, trying fallback:", err);
+                }
+
+                // If Bhashini ASR did not return text, try browser recognition fallback if available
+                if (browserRecognition) {
+                    startBrowserRecognitionFallback();
+                } else {
+                    stopVoiceSearchUI();
+                }
+            };
+        }
+
+        /**
+         * Fallback to browser SpeechRecognition if Bhashini is unconfigured or media recording failed.
+         */
+        function startBrowserRecognitionFallback() {
+            if (!browserRecognition) {
+                alert("Voice search is not supported or microphone access was denied.");
+                stopVoiceSearchUI();
+                return;
+            }
+
+            try {
+                const lang = currentLanguage;
+                browserRecognition.lang = lang === "hi" ? "hi-IN" : (lang === "or" ? "hi-IN" : "en-IN");
+                startVoiceSearchUI();
+                browserRecognition.start();
+            } catch (err) {
+                console.warn("Browser SpeechRecognition start error:", err);
+                stopVoiceSearchUI();
+            }
+        }
+
+        /**
+         * Apply recognized speech text into location search input and dispatch query.
+         */
+        function applyVoiceSearchResult(rawText, source) {
+            stopVoiceSearchUI();
+            // Clean recognized transcript (strip trailing punctuation)
+            const cleanText = rawText.replace(/[.,;!?]/g, "").trim();
+            if (cleanText) {
+                const locationInput = document.getElementById("locationInput");
+                locationInput.value = cleanText;
+                console.info(`Voice recognized (${source}): '${cleanText}' - Dispatching meteorological telemetry query.`);
+                fetchWeatherData();
+            }
+        }
+
+        function startVoiceSearchUI() {
+            const statusEl = document.getElementById("voiceSearchStatus");
+            const micBtn = document.getElementById("voiceSearchBtn");
+            const micIcon = document.getElementById("micIcon");
+
+            if (statusEl) {
+                statusEl.classList.remove("hidden");
+                statusEl.classList.add("flex");
+                document.getElementById("voiceSearchStatusText").textContent = "Listening... Speak Indian district name";
+            }
+
+            if (micBtn) {
+                micBtn.classList.remove("bg-slate-100", "text-slate-700");
+                micBtn.classList.add("bg-red-600", "text-white", "animate-pulse");
+            }
+            if (micIcon) {
+                micIcon.classList.remove("text-blue-900");
+                micIcon.classList.add("text-white");
+            }
+        }
+
+        function stopVoiceSearchUI() {
+            isRecordingVoice = false;
+            const statusEl = document.getElementById("voiceSearchStatus");
+            const micBtn = document.getElementById("voiceSearchBtn");
+            const micIcon = document.getElementById("micIcon");
+
+            if (statusEl) {
+                statusEl.classList.add("hidden");
+                statusEl.classList.remove("flex");
+            }
+
+            if (micBtn) {
+                micBtn.classList.remove("bg-red-600", "text-white", "animate-pulse");
+                micBtn.classList.add("bg-slate-100", "text-slate-700");
+            }
+            if (micIcon) {
+                micIcon.classList.remove("text-white");
+                micIcon.classList.add("text-blue-900");
+            }
+            lucide.createIcons();
+        }
+
+        // Voice preloading for mobile and desktop browser engines
+        if (speechSynth && speechSynth.onvoiceschanged !== undefined) {
+            speechSynth.onvoiceschanged = () => { speechSynth.getVoices(); };
+        }
+    </script>
+</body>
+</html>
