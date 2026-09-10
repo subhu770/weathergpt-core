@@ -2,8 +2,8 @@
 WeatherGPT - Weather & Geocoding Service
 Ministry of Earth Sciences (MoES / SIH26068)
 
-Asynchronous meteorological data ingestion using httpx, dynamic geocoding for any Indian
-district/city/pincode with robust state-level prioritization, and coordinate-based in-memory caching.
+Asynchronous meteorological data ingestion using httpx, dynamic geocoding for Indian
+districts with robust state-level prioritization, and coordinate-based in-memory caching.
 """
 
 import time
@@ -48,7 +48,7 @@ DISTRICT_SPELLING_VARIANTS = {
 
 
 class LocationNotFoundError(Exception):
-    """Raised when a geocoding query yields no valid geographical coordinates."""
+    """Raised when a geocoding query yields no valid geographical coordinates for the target district."""
     pass
 
 
@@ -106,15 +106,15 @@ class WeatherService:
 
     async def resolve_coordinates(self, location_query: str) -> Dict[str, Any]:
         """
-        Dynamically geocode ANY Indian district, city, sub-division, or pincode
-        via Open-Meteo Geocoding API with Indian Postal fallback and state-level prioritization.
+        Dynamically geocode target Indian district via Open-Meteo Geocoding API
+        with state-level prioritization and postal resolution.
         
         Returns:
             Dict containing place name, state, country, latitude, longitude, elevation, and coastal status.
         """
         clean_query = location_query.strip()
         if not clean_query:
-            raise LocationNotFoundError("Location query cannot be empty.")
+            raise LocationNotFoundError("District query cannot be empty.")
 
         async with httpx.AsyncClient(timeout=settings.http_timeout_seconds) as client:
             # 1. Detect 6-digit Indian PIN code
@@ -237,7 +237,7 @@ class WeatherService:
 
             if not selected_match:
                 logger.warning(f"No geocoding match found for: '{clean_query}'")
-                raise LocationNotFoundError(f"Location '{clean_query}' could not be resolved. Please verify the spelling or include the district/state.")
+                raise LocationNotFoundError(f"District '{clean_query}' could not be resolved. Please verify the spelling or include the state (e.g., 'Khordha, Odisha').")
 
             raw_name = clean_diacritics(selected_match.get("name", matched_candidate.capitalize()))
             state_name = (

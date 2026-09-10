@@ -150,7 +150,7 @@
                         <i data-lucide="map-pin" class="w-4 h-4 text-blue-900"></i>
                         Dynamic Location Geocoding & Telemetry Ingestion
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Search ANY district, city, sub-division, or pincode across India for real-time IMD decision support.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Enter Indian District for real-time IMD decision support.</p>
                 </div>
                 <div class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 self-start sm:self-auto">
                     <i data-lucide="satellite" class="w-3.5 h-3.5 text-blue-800"></i>
@@ -164,11 +164,11 @@
                 <div class="md:col-span-6 space-y-1.5">
                     <div class="flex items-center justify-between">
                         <label for="locationInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                            Target District, City, or Pincode
+                            TARGET DISTRICT
                         </label>
                         <span id="voiceSearchStatus" class="hidden text-[11px] font-medium text-red-600 animate-pulse items-center gap-1">
                             <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
-                            <span id="voiceSearchStatusText">Listening... Speak district name</span>
+                            <span id="voiceSearchStatusText">Listening... Speak Indian district name</span>
                         </span>
                     </div>
                     <div class="relative flex items-center">
@@ -176,8 +176,8 @@
                             type="text" 
                             id="locationInput" 
                             list="districtSuggestions"
-                            value="Bhubaneswar"
-                            placeholder="Enter any Indian district (e.g. Bhubaneswar, Cuttack, Puri, Delhi, Pune, 751024)..." 
+                            value="Khordha"
+                            placeholder="Enter District (e.g. Khordha, Cuttack, Pune)" 
                             class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-l pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium"
                         >
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none"></i>
@@ -193,28 +193,30 @@
                             <span id="micBtnText" class="hidden sm:inline">Voice Search</span>
                         </button>
                         <datalist id="districtSuggestions">
-                            <option value="Bhubaneswar, Odisha">
+                            <option value="Khordha, Odisha">
                             <option value="Cuttack, Odisha">
                             <option value="Puri, Odisha">
-                            <option value="Paradip, Odisha">
+                            <option value="Kendrapara, Odisha">
+                            <option value="Ganjam, Odisha">
                             <option value="Balasore, Odisha">
                             <option value="Sambalpur, Odisha">
-                            <option value="Berhampur, Odisha">
-                            <option value="Rourkela, Odisha">
                             <option value="Koraput, Odisha">
-                            <option value="Delhi">
-                            <option value="Mumbai, Maharashtra">
-                            <option value="Kolkata, West Bengal">
-                            <option value="Chennai, Tamil Nadu">
-                            <option value="Bengaluru, Karnataka">
-                            <option value="Hyderabad, Telangana">
+                            <option value="Mayurbhanj, Odisha">
+                            <option value="Pune, Maharashtra">
+                            <option value="Nagpur, Maharashtra">
+                            <option value="Thane, Maharashtra">
                             <option value="Ahmedabad, Gujarat">
+                            <option value="Surat, Gujarat">
+                            <option value="Chennai, Tamil Nadu">
+                            <option value="Coimbatore, Tamil Nadu">
+                            <option value="Bengaluru Urban, Karnataka">
+                            <option value="Hyderabad, Telangana">
                             <option value="Visakhapatnam, Andhra Pradesh">
-                            <option value="Kochi, Kerala">
-                            <option value="Guwahati, Assam">
-                            <option value="Shimla, Himachal Pradesh">
+                            <option value="Kolkata, West Bengal">
+                            <option value="Kamrup Metropolitan, Assam">
                             <option value="Patna, Bihar">
                             <option value="Lucknow, Uttar Pradesh">
+                            <option value="Jaipur, Rajasthan">
                         </datalist>
                     </div>
                 </div>
@@ -245,14 +247,13 @@
                     <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-600"></i>
                     Quick Hotspots:
                 </span>
-                <button type="button" onclick="setCityAndQuery('Bhubaneswar')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Bhubaneswar</button>
+                <button type="button" onclick="setCityAndQuery('Khordha')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Khordha</button>
                 <button type="button" onclick="setCityAndQuery('Cuttack')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Cuttack</button>
                 <button type="button" onclick="setCityAndQuery('Puri')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Puri</button>
-                <button type="button" onclick="setCityAndQuery('Paradip')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Paradip</button>
-                <button type="button" onclick="setCityAndQuery('Delhi')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Delhi</button>
-                <button type="button" onclick="setCityAndQuery('Mumbai')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Mumbai</button>
-                <button type="button" onclick="setCityAndQuery('Kolkata')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Kolkata</button>
-                <button type="button" onclick="setCityAndQuery('Chennai')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Chennai</button>
+                <button type="button" onclick="setCityAndQuery('Kendrapara')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Kendrapara</button>
+                <button type="button" onclick="setCityAndQuery('Ganjam')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Ganjam</button>
+                <button type="button" onclick="setCityAndQuery('Pune')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Pune</button>
+                <button type="button" onclick="setCityAndQuery('Nagpur')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:border-blue-300 text-slate-800 border border-slate-300 font-medium transition">Nagpur</button>
             </div>
         </section>
 
@@ -691,7 +692,7 @@
         async function fetchWeatherData() {
             stopTTS();
             const inputVal = document.getElementById("locationInput").value.trim();
-            const queryTarget = inputVal || "Bhubaneswar";
+            const queryTarget = inputVal || "Khordha";
             currentLocation = queryTarget;
 
             const queryBtn = document.getElementById("queryBtn");
@@ -726,7 +727,7 @@
             } catch (err) {
                 console.error("Error fetching weather data:", err);
                 document.getElementById("conversationalBox").textContent = 
-                    `[IMD COMMUNIQUE ERROR] Failed to fetch meteorological telemetry for location '${queryTarget}'.\nReason: ${err.message}\n\nPlease verify that the location is a valid Indian district, city, or pincode.`;
+                    `[IMD COMMUNIQUE ERROR] Failed to fetch meteorological telemetry for target district '${queryTarget}'.\nReason: ${err.message}\n\nPlease verify that the location is a valid Indian district name (e.g., 'Khordha', 'Cuttack', 'Pune').`;
             } finally {
                 queryBtn.disabled = false;
                 queryBtn.classList.remove("opacity-75", "cursor-not-allowed");

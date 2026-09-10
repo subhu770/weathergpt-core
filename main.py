@@ -48,7 +48,7 @@ app.add_middleware(
 
 class WeatherQueryPayload(BaseModel):
     """Schema for meteorological bulletin query."""
-    location: Optional[str] = Field(None, description="Target Indian district, city, sub-division, or pincode (e.g., 'Bhubaneswar', 'Puri', 'Delhi', '751024')")
+    location: Optional[str] = Field(None, description="Target Indian district (e.g., 'Khordha', 'Cuttack', 'Puri', 'Pune')")
     city: Optional[str] = Field(None, description="Alternative key for backward compatibility")
     language: str = Field(default="en", description="Advisory language: 'en' (English), 'hi' (Hindi)")
     role: Optional[str] = Field(default="general", description="User persona: 'general', 'farmer', 'fisherman'")
@@ -142,7 +142,7 @@ async def transcribe_speech_endpoint(payload: ASRRequestPayload):
 async def process_meteorological_query(payload: WeatherQueryPayload):
     """
     Core Decision-Support Endpoint:
-    1. Dynamically geocodes target Indian location via Open-Meteo API.
+    1. Dynamically geocodes target Indian district via Open-Meteo API.
     2. Ingests live telemetry (temperature, wind, gusts, precipitation, humidity, WMO code) with TTL caching.
     3. Runs deterministic IMD/NDMA 4-tier alert matrix.
     4. Computes Agro-meteorological (Agromet) and Marine/Fishermen directives.
@@ -152,7 +152,7 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
     if not target_query:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Location query is required. Please specify an Indian district, city, or pincode."
+            detail="District query is required. Please specify a valid Indian district name."
         )
 
     # 1. Asynchronous Dynamic Geocoding
