@@ -50,20 +50,20 @@ class WeatherQueryPayload(BaseModel):
     """Schema for meteorological bulletin query."""
     location: Optional[str] = Field(None, description="Target Indian district, city, sub-division, or pincode (e.g., 'Bhubaneswar', 'Puri', 'Delhi', '751024')")
     city: Optional[str] = Field(None, description="Alternative key for backward compatibility")
-    language: str = Field(default="en", description="Advisory language: 'en' (English), 'hi' (Hindi), 'or' (Odia)")
+    language: str = Field(default="en", description="Advisory language: 'en' (English), 'hi' (Hindi)")
     role: Optional[str] = Field(default="general", description="User persona: 'general', 'farmer', 'fisherman'")
 
 
 class TTSRequestPayload(BaseModel):
     """Schema for Bhashini text-to-speech synthesis request."""
     text: str = Field(..., min_length=1, description="Advisory bulletin text or narrative script to synthesize")
-    language: str = Field(default="en", description="Language code or name ('en', 'hi', 'or', 'English', 'Hindi', 'Odia')")
+    language: str = Field(default="en", description="Language code or name ('en', 'hi', 'English', 'Hindi')")
 
 
 class ASRRequestPayload(BaseModel):
     """Schema for Bhashini automated speech recognition audio transcription."""
     audio: str = Field(..., min_length=1, description="Base64-encoded audio waveform string (WAV or WebM)")
-    language: Optional[str] = Field(default="en", description="Target spoken Indic language ('en', 'hi', 'or')")
+    language: Optional[str] = Field(default="en", description="Target spoken Indic language ('en', 'hi')")
 
 
 @app.post("/api/voice/tts")
@@ -146,7 +146,7 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
     2. Ingests live telemetry (temperature, wind, gusts, precipitation, humidity, WMO code) with TTL caching.
     3. Runs deterministic IMD/NDMA 4-tier alert matrix.
     4. Computes Agro-meteorological (Agromet) and Marine/Fishermen directives.
-    5. Synthesizes official bulletin and speech-optimized TTS script in English, Hindi, or Odia.
+    5. Synthesizes official bulletin and speech-optimized TTS script in English or Hindi.
     """
     target_query = (payload.location or payload.city or "").strip()
     if not target_query:
@@ -265,9 +265,9 @@ async def health_check():
         "bhashini": {
             "configured": bhashini_service.is_configured(),
             "pipeline_id": bool(settings.bhashini_pipeline_id),
-            "supported_voice_languages": ["en", "hi", "or"]
+            "supported_voice_languages": ["en", "hi"]
         },
-        "supported_languages": ["en", "hi", "or"],
+        "supported_languages": ["en", "hi"],
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
     }
 

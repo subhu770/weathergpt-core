@@ -227,7 +227,6 @@
                     <select id="langSelect" onchange="onLanguageChange(this.value)" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
                         <option value="en" selected>English (Official Standard)</option>
                         <option value="hi">हिन्दी (Hindi)</option>
-                        <option value="or">ଓଡ଼ିଆ (Odia)</option>
                     </select>
                 </div>
 
@@ -844,11 +843,11 @@
 
             const lang = currentLanguage;
             document.getElementById("agroSprayDesc").textContent = 
-                lang === 'hi' ? agro.spraying_desc_hi : (lang === 'or' ? agro.spraying_desc_or : agro.spraying_desc_en);
+                lang === 'hi' ? agro.spraying_desc_hi : agro.spraying_desc_en;
             document.getElementById("agroIrrigationDesc").textContent = 
-                lang === 'hi' ? agro.irrigation_hi : (lang === 'or' ? agro.irrigation_or : agro.irrigation_en);
+                lang === 'hi' ? agro.irrigation_hi : agro.irrigation_en;
             document.getElementById("agroHarvestDesc").textContent = 
-                lang === 'hi' ? (agro.harvesting_hi || agro.harvest_hi) : (lang === 'or' ? (agro.harvesting_or || agro.harvest_or) : (agro.harvesting_en || agro.harvest_en));
+                lang === 'hi' ? (agro.harvesting_hi || agro.harvest_hi) : (agro.harvesting_en || agro.harvest_en);
 
             // 4. Coastal & Marine Fishermen Advisory
             const ventureBadge = document.getElementById("coastalVentureBadge");
@@ -864,9 +863,9 @@
             }
 
             document.getElementById("coastalSeaState").textContent = 
-                lang === 'hi' ? coastal.sea_state_hi : (lang === 'or' ? coastal.sea_state_or : coastal.sea_state_en);
+                lang === 'hi' ? coastal.sea_state_hi : coastal.sea_state_en;
             document.getElementById("coastalDirective").textContent = 
-                lang === 'hi' ? coastal.advisory_hi : (lang === 'or' ? coastal.advisory_or : coastal.advisory_en);
+                lang === 'hi' ? coastal.advisory_hi : coastal.advisory_en;
             document.getElementById("coastalFlagText").textContent = data.is_coastal ? `Coastal Marine Belt (${data.state})` : `Inland District (${data.state})`;
 
             // 5. Official Monospace Synthesized Bulletin
@@ -889,7 +888,7 @@
          * 1. Strips markdown tokens (*, #, _, `, ~, >), dividers (━, ---, ===), and bullet points (•, -).
          * 2. Strips emojis and technical brackets so speech engine doesn't read symbol names.
          * 3. Expands meteorological units and abbreviations (km/h, °C, mm, %, IMD, MoES, NDMA, ICAR)
-         *    into phonetically smooth spoken words tailored to English, Hindi, and Odia.
+         *    into phonetically smooth spoken words tailored to English and Hindi.
          */
         function normalizeTextForSpeech(rawText, lang = "en") {
             if (!rawText) return "";
@@ -926,25 +925,6 @@
                     .replace(/\bSIH\d+\b/gi, " ")
                     .replace(/\bUTC\b/gi, " यू टी सी ")
                     .replace(/\bIST\b/gi, " भारतीय मानक समय ");
-            } else if (lang === "or") {
-                // Odia phonetic replacements
-                text = text
-                    .replace(/\bkm\/h\b|\bkmph\b/gi, " କିଲୋମିଟର ପ୍ରତି ଘଣ୍ଟା ")
-                    .replace(/°C|° C|deg C|degrees C/gi, " ଡିଗ୍ରୀ ସେଲସିୟସ ")
-                    .replace(/°/g, " ଡିଗ୍ରୀ ")
-                    .replace(/\bmm\b/gi, " ମିଲିମିଟର ")
-                    .replace(/\bcm\b/gi, " ସେଣ୍ଟିମିଟର ")
-                    .replace(/\bm\b/gi, " ମିଟର ")
-                    .replace(/%/g, " ପ୍ରତିଶତ ")
-                    .replace(/\bhPa\b/gi, " ହେକ୍ଟୋପାସ୍କାଲ ")
-                    .replace(/\bIMD\b/g, " ଆଇ ଏମ୍ ଡି ")
-                    .replace(/\bMoES\b/g, " ପୃଥିବୀ ବିଜ୍ଞାନ ମନ୍ତ୍ରଣାଳୟ ")
-                    .replace(/\bNDMA\b/g, " ଏନ୍ ଡି ଏମ୍ ଏ ")
-                    .replace(/\bICAR\b/g, " ଆଇ ସି ଏ ଆର୍ ")
-                    .replace(/\bINCOIS\b/g, " ଇନକୋଇସ୍ ")
-                    .replace(/\bSIH\d+\b/gi, " ")
-                    .replace(/\bUTC\b/gi, " ୟୁ ଟି ସି ")
-                    .replace(/\bIST\b/gi, " ଭାରତୀୟ ମାନକ ସମୟ ");
             } else {
                 // English phonetic replacements
                 text = text
@@ -1021,30 +1001,12 @@
                 "hindi"
             ];
 
-            const odiaPreferences = [
-                "odia",
-                "oriya",
-                "or-in",
-                "or_in",
-                "google हिन्दी",
-                "google hindi",
-                "microsoft madhur online (natural)",
-                "microsoft swara online (natural)",
-                "microsoft madhur",
-                "microsoft swara",
-                "hi-in",
-                "en-in"
-            ];
-
             let preferences = englishPreferences;
             let targetLocalePrefix = "en";
 
             if (targetLang === "hi") {
                 preferences = hindiPreferences;
                 targetLocalePrefix = "hi";
-            } else if (targetLang === "or") {
-                preferences = odiaPreferences;
-                targetLocalePrefix = "or";
             }
 
             // 1. Search by ranked specific natural voice names
@@ -1195,8 +1157,6 @@
             const lang = currentLanguage;
             if (lang === "hi") {
                 currentUtterance.lang = "hi-IN";
-            } else if (lang === "or") {
-                currentUtterance.lang = "hi-IN"; // Odia phonetic approximation fallback
             } else {
                 currentUtterance.lang = "en-IN";
             }
@@ -1491,7 +1451,7 @@
 
             try {
                 const lang = currentLanguage;
-                browserRecognition.lang = lang === "hi" ? "hi-IN" : (lang === "or" ? "hi-IN" : "en-IN");
+                browserRecognition.lang = lang === "hi" ? "hi-IN" : "en-IN";
                 startVoiceSearchUI();
                 browserRecognition.start();
             } catch (err) {

@@ -33,16 +33,6 @@ LANGUAGE_MAP: Dict[str, str] = {
     "hi-in": "hi",
     "हिन्दी": "hi",
     "हिंदी": "hi",
-
-    # Odia mappings
-    "or": "or",
-    "ori": "or",
-    "odi": "or",
-    "odia": "or",
-    "oriya": "or",
-    "or-in": "or",
-    "ଓଡ଼ିଆ": "or",
-    "ଓଡିଆ": "or",
 }
 
 
@@ -75,7 +65,7 @@ class BhashiniService:
 
     def normalize_language(self, language: Optional[str]) -> str:
         """
-        Normalize input language names and variants to standard Bhashini codes ('en', 'hi', 'or').
+        Normalize input language names and variants to standard Bhashini codes ('en', 'hi').
         Defaults to 'en' (English) if unknown or unspecified.
         """
         if not language:
@@ -109,7 +99,7 @@ class BhashiniService:
 
         Args:
             text: Text script or bulletin to synthesize into speech.
-            language: Target language name or code ('en', 'hi', 'or').
+            language: Target language name or code ('en', 'hi').
 
         Returns:
             Base64-encoded audio string (WAV/MP3), or None if Bhashini is unconfigured or unavailable.
@@ -186,7 +176,7 @@ class BhashiniService:
 
         Args:
             audio_base64: Raw or data-URI base64-encoded audio bytes (WAV/WebM).
-            language: Expected spoken language name or code ('en', 'hi', 'or').
+            language: Expected spoken language name or code ('en', 'hi').
 
         Returns:
             Transcribed string text, or None if Bhashini is unconfigured or unfulfilled.
