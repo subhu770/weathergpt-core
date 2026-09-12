@@ -1,0 +1,19 @@
+{
+  "name": "IMD WeatherGPT - Ministry of Earth Sciences",
+  "short_name": "WeatherGPT",
+  "description": "Official Meteorological Decision Support & Early-Warning Advisory System - Ministry of Earth Sciences (MoES / SIH26068)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["weather", "government", "news"]
+}

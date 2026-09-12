@@ -50,6 +50,8 @@ class WeatherQueryPayload(BaseModel):
     """Schema for meteorological bulletin query."""
     location: Optional[str] = Field(None, description="Target Indian district (e.g., 'Khordha', 'Cuttack', 'Puri', 'Pune')")
     city: Optional[str] = Field(None, description="Alternative key for backward compatibility")
+    latitude: Optional[float] = Field(None, description="Direct geographic latitude (e.g., 20.2961)")
+    longitude: Optional[float] = Field(None, description="Direct geographic longitude (e.g., 85.8245)")
     language: str = Field(default="en", description="Advisory language: 'en' (English), 'hi' (Hindi)")
     role: Optional[str] = Field(default="general", description="User persona: 'general', 'farmer', 'fisherman'")
 
@@ -138,30 +140,65 @@ async def transcribe_speech_endpoint(payload: ASRRequestPayload):
     }
 
 
+@app.get("/api/reverse-geocode")
+async def reverse_geocode_endpoint(
+    lat: float = Query(..., description="Geographic latitude (e.g., 20.2961)"),
+    lon: float = Query(..., description="Geographic longitude (e.g., 85.8245)")
+):
+    """
+    Reverse-Geocoding Endpoint:
+    Resolves client latitude and longitude into an official Indian administrative district and state.
+    """
+    try:
+        location_data = await weather_service.reverse_geocode(lat, lon)
+        return {
+            "status": "success",
+            "district": location_data["district"],
+            "state": location_data["state"],
+            "country": location_data["country"],
+            "latitude": location_data["latitude"],
+            "longitude": location_data["longitude"],
+            "formatted_location": location_data["formatted_location"],
+            "is_coastal": location_data["is_coastal"],
+            "coastal_proximity": location_data["coastal_proximity"]
+        }
+    except Exception as err:
+        logger.error(f"Reverse geocoding endpoint exception for ({lat}, {lon}): {err}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Reverse geocoding failure: {str(err)}"
+        )
+
+
 @app.post("/api/query")
 async def process_meteorological_query(payload: WeatherQueryPayload):
     """
     Core Decision-Support Endpoint:
-    1. Dynamically geocodes target Indian district via Open-Meteo API.
+    1. Dynamically geocodes target Indian district via Open-Meteo API or direct coordinates.
     2. Ingests live telemetry (temperature, wind, gusts, precipitation, humidity, WMO code) with TTL caching.
     3. Runs deterministic IMD/NDMA 4-tier alert matrix.
     4. Computes Agro-meteorological (Agromet) and Marine/Fishermen directives.
     5. Synthesizes official bulletin and speech-optimized TTS script in English or Hindi.
     """
     target_query = (payload.location or payload.city or "").strip()
-    if not target_query:
+    has_coords = payload.latitude is not None and payload.longitude is not None
+
+    if not target_query and not has_coords:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="District query is required. Please specify a valid Indian district name."
+            detail="District query or geographic coordinates (latitude, longitude) are required."
         )
 
-    # 1. Asynchronous Dynamic Geocoding
+    # 1. Asynchronous Dynamic Geocoding or Coordinate Resolution
     try:
-        location_data = await weather_service.resolve_coordinates(target_query)
+        if has_coords and (not target_query or target_query.lower() in ["", "auto", "detect", "current", "current location", "my location"]):
+            location_data = await weather_service.reverse_geocode(payload.latitude, payload.longitude)
+        else:
+            location_data = await weather_service.resolve_coordinates(target_query)
     except LocationNotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
     except Exception as err:
-        logger.error(f"Geocoding exception for '{target_query}': {err}")
+        logger.error(f"Geocoding exception for query='{target_query}', coords=({payload.latitude}, {payload.longitude}): {err}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Geocoding failure: {str(err)}")
 
     lat = location_data["latitude"]
@@ -276,6 +313,28 @@ async def health_check():
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/sw.js")
+async def service_worker():
+    """Serve the root Service Worker script for Web Push and Offline Notifications."""
+    sw_path = os.path.join(os.path.dirname(__file__), "static", "sw.js")
+    if os.path.exists(sw_path):
+        return FileResponse(
+            sw_path,
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}
+        )
+    raise HTTPException(status_code=404, detail="Service worker script not found.")
+
+
+@app.get("/manifest.json")
+async def web_manifest():
+    """Serve the Web App Manifest."""
+    manifest_path = os.path.join(os.path.dirname(__file__), "static", "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="Manifest not found.")
 
 
 @app.get("/")

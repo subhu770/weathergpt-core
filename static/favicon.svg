@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0f2942"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded Shield Background -->
+  <rect width="192" height="192" rx="40" fill="url(#skyGrad)"/>
+  
+  <!-- Sun -->
+  <circle cx="120" cy="76" r="32" fill="url(#sunGrad)"/>
+  <g stroke="#f59e0b" stroke-width="5" stroke-linecap="round">
+    <line x1="120" y1="28" x2="120" y2="38"/>
+    <line x1="120" y1="114" x2="120" y2="124"/>
+    <line x1="72" y1="76" x2="82" y2="76"/>
+    <line x1="158" y1="76" x2="168" y2="76"/>
+    <line x1="86" y1="42" x2="94" y2="50"/>
+    <line x1="146" y1="102" x2="154" y2="110"/>
+    <line x1="86" y1="110" x2="94" y2="102"/>
+    <line x1="146" y1="50" x2="154" y2="42"/>
+  </g>
+  
+  <!-- Cloud -->
+  <path d="M68 144 h76 a30 30 0 0 0 4 -59.7 A40 40 0 0 0 74 68 a38 38 0 0 0 -18 7.5 A28 28 0 0 0 68 144 z" fill="url(#cloudGrad)" opacity="0.95"/>
+  
+  <!-- Indian National Tricolor Accent at Bottom -->
+  <rect x="28" y="160" width="45" height="6" rx="3" fill="#FF9933"/>
+  <rect x="73.5" y="160" width="45" height="6" rx="3" fill="#FFFFFF"/>
+  <rect x="119" y="160" width="45" height="6" rx="3" fill="#138808"/>
+</svg>

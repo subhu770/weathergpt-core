@@ -269,6 +269,128 @@ class WeatherService:
                 "query": clean_query
             }
 
+    async def reverse_geocode(self, lat: float, lon: float) -> Dict[str, Any]:
+        """
+        Reverse-geocode geographic coordinates (lat, lon) to determine the administrative
+        Indian district, state, country, and coastal classification.
+        Uses BigDataCloud reverse client with fallback to OpenStreetMap Nominatim.
+        """
+        async with httpx.AsyncClient(timeout=settings.http_timeout_seconds) as client:
+            # 1. Try BigDataCloud Free Reverse Geocode Client
+            try:
+                bdc_url = f"https://api.bigdatacloud.net/data/reverse-geocode-client?latitude={lat}&longitude={lon}&localityLanguage=en"
+                res = await client.get(bdc_url)
+                if res.status_code == 200:
+                    data = res.json()
+                    city = data.get("city") or data.get("locality") or ""
+                    state = data.get("principalSubdivision") or ""
+                    country = data.get("countryName") or "India"
+                    
+                    # Extract district from localityInfo administrative hierarchy
+                    district = ""
+                    locality_info = data.get("localityInfo", {}).get("administrative", [])
+                    
+                    # First priority: look for explicit district level (adminLevel 5 or 'district' in description)
+                    for item in locality_info:
+                        desc = item.get("description", "").lower()
+                        name_cand = item.get("name", "")
+                        admin_lvl = item.get("adminLevel", 0)
+                        
+                        if admin_lvl == 5 or "district" in desc or "district" in name_cand.lower():
+                            cand = name_cand.replace(" District", "").replace(" district", "").strip()
+                            if cand and cand.lower() != state.lower():
+                                district = cand
+                                break
+
+                    # Second priority: city / locality
+                    if not district and city:
+                        district = city.strip()
+
+                    # Third priority: check other administrative levels below state
+                    if not district:
+                        for item in locality_info:
+                            name_cand = item.get("name", "").strip()
+                            admin_lvl = item.get("adminLevel", 0)
+                            if admin_lvl > 4 and name_cand and name_cand.lower() != state.lower() and name_cand.lower() != country.lower():
+                                district = name_cand.replace(" District", "").replace(" district", "").strip()
+                                break
+
+                    if not district:
+                        district = state or "Current District"
+                    
+                    district_clean = clean_diacritics(district)
+                    state_clean = clean_diacritics(state)
+                    is_coastal, proximity = self._is_coastal_region(district_clean, state_clean, country)
+                    
+                    return {
+                        "name": district_clean,
+                        "district": district_clean,
+                        "state": state_clean,
+                        "country": country,
+                        "latitude": float(lat),
+                        "longitude": float(lon),
+                        "elevation": 20.0,
+                        "is_coastal": is_coastal,
+                        "coastal_proximity": proximity,
+                        "formatted_location": f"{district_clean}, {state_clean}" if (state_clean and state_clean.lower() not in district_clean.lower()) else district_clean
+                    }
+            except Exception as bdc_err:
+                logger.warning(f"BigDataCloud reverse geocoding error for ({lat}, {lon}): {bdc_err}")
+
+            # 2. Try OpenStreetMap Nominatim Reverse Lookup
+            try:
+                nom_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&zoom=10"
+                headers = {"User-Agent": "WeatherGPT-MoES-SIH26068/2.0 (contact@imd-weathergpt.gov.in)"}
+                res = await client.get(nom_url, headers=headers)
+                if res.status_code == 200:
+                    nom_data = res.json()
+                    addr = nom_data.get("address", {})
+                    district = (
+                        addr.get("state_district") or 
+                        addr.get("county") or 
+                        addr.get("city") or 
+                        addr.get("town") or 
+                        addr.get("municipality") or 
+                        addr.get("suburb") or 
+                        "India"
+                    )
+                    state = addr.get("state") or ""
+                    country = addr.get("country") or "India"
+                    
+                    district_clean = clean_diacritics(district.replace(" District", "").replace(" district", "").strip())
+                    state_clean = clean_diacritics(state)
+                    is_coastal, proximity = self._is_coastal_region(district_clean, state_clean, country)
+                    
+                    return {
+                        "name": district_clean,
+                        "district": district_clean,
+                        "state": state_clean,
+                        "country": country,
+                        "latitude": float(lat),
+                        "longitude": float(lon),
+                        "elevation": 20.0,
+                        "is_coastal": is_coastal,
+                        "coastal_proximity": proximity,
+                        "formatted_location": f"{district_clean}, {state_clean}" if state_clean else district_clean
+                    }
+            except Exception as nom_err:
+                logger.warning(f"Nominatim reverse geocoding error for ({lat}, {lon}): {nom_err}")
+
+            # 3. Coordinate fallback
+            is_coastal, proximity = self._is_coastal_region(f"Coordinate ({lat:.2f}, {lon:.2f})", "", "India")
+            return {
+                "name": f"Location ({lat:.2f}°N, {lon:.2f}°E)",
+                "district": f"Location ({lat:.2f}°N, {lon:.2f}°E)",
+                "state": "India",
+                "country": "India",
+                "latitude": float(lat),
+                "longitude": float(lon),
+                "elevation": 20.0,
+                "is_coastal": is_coastal,
+                "coastal_proximity": proximity,
+                "formatted_location": f"{lat:.2f}°N, {lon:.2f}°E"
+            }
+
     async def get_live_metrics(self, lat: float, lon: float) -> Dict[str, Any]:
         """
         Fetch live meteorological telemetry from Open-Meteo High-Resolution API.
