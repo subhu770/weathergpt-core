@@ -127,8 +127,20 @@
             </div>
 
             <!-- Right Telemetry, Alerts & Official Clock -->
-            <div class="flex flex-wrap items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
+            <div class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
                 
+                <!-- Citizen Telecom SMS & Voice IVR Alert Button -->
+                <button 
+                    id="telecomModalOpenBtn" 
+                    onclick="openTelecomModal()" 
+                    class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm border border-slate-700"
+                    title="Register Mobile Phone for SMS & Automated Voice IVR Alerts (Keypad & Feature Phone Support)"
+                    aria-label="Register Phone for Alerts (SMS & IVR)"
+                >
+                    <i data-lucide="smartphone" class="w-3.5 h-3.5 text-sky-400"></i>
+                    <span id="telecomBtnText">📱 Register Phone for Alerts (SMS & IVR)</span>
+                </button>
+
                 <!-- Web Push Weather Alerts Toggle Button -->
                 <button 
                     id="notificationToggleBtn" 
@@ -605,6 +617,151 @@
 
     </main>
 
+    <!-- Citizen Telecom Alert Registration Modal (SMS & IVR Feature Phone Support) -->
+    <div id="telecomModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="relative bg-white border border-slate-200 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden transition-all transform my-8">
+            
+            <!-- Modal Tricolor Top Line -->
+            <div class="gov-tricolor-bar"></div>
+
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between bg-slate-50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-950">
+                        <i data-lucide="radio" class="w-5 h-5 text-amber-400"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500">C-DAC / NDMA CAP Gateway</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">2G / 3G / 4G / 5G</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900 tracking-tight">
+                            Citizen Telecom Alert Subscription
+                        </h3>
+                        <p class="text-xs text-slate-500">SMS & Automated Voice Call (Keypad & Feature Phone Support)</p>
+                    </div>
+                </div>
+                <button onclick="closeTelecomModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200 transition" title="Close modal" aria-label="Close modal">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="telecomForm" onsubmit="event.preventDefault(); submitTelecomSubscription();" class="p-5 space-y-4 text-xs sm:text-sm">
+                
+                <!-- Target District Notice -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-800 flex-shrink-0"></i>
+                        <span class="text-xs text-blue-950 font-medium">Subscribed District:</span>
+                        <span id="telecomModalDistrict" class="font-bold text-xs text-blue-900">Khordha, Odisha</span>
+                    </div>
+                    <span class="text-[10px] text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200 font-mono">Geo-Targeted</span>
+                </div>
+
+                <!-- Phone Number Input -->
+                <div class="space-y-1.5">
+                    <label for="telecomPhoneInput" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                        Citizen Mobile Number <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative flex items-center">
+                        <span class="inline-flex items-center px-3 rounded-l border border-r-0 border-slate-300 bg-slate-100 text-slate-700 font-mono font-semibold text-xs h-10">
+                            +91 (India)
+                        </span>
+                        <input 
+                            type="tel" 
+                            id="telecomPhoneInput" 
+                            required 
+                            maxlength="10"
+                            pattern="[6-9][0-9]{9}" 
+                            placeholder="Enter 10-digit mobile number" 
+                            class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-r px-3 h-10 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 font-mono font-medium"
+                        >
+                    </div>
+                    <p class="text-[11px] text-slate-500">Supports all Indian telecom operators (Jio, Airtel, Vi, BSNL) including basic feature/keypad phones.</p>
+                </div>
+
+                <!-- Channel Checkboxes -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                        Alert Delivery Channels <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="checkbox" id="channelSms" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
+                            <div class="flex-1">
+                                <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                                    <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-800"></i>
+                                    SMS Notifications (National DLT Gateway)
+                                </div>
+                                <div class="text-[11px] text-slate-500">Standard text alerts on severe weather, rainfall intensity, and storm hazards.</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="checkbox" id="channelVoice" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
+                            <div class="flex-1">
+                                <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                                    <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-700"></i>
+                                    Automated Voice Call (IVR Outdial for Keypad Phones)
+                                </div>
+                                <div class="text-[11px] text-slate-500">Automated phone call with spoken audio advisory for rural, agricultural & fishermen communities.</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Language Preference -->
+                <div class="space-y-1.5">
+                    <label for="telecomLangSelect" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                        Voice & SMS Language Preference
+                    </label>
+                    <select id="telecomLangSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-xs rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 font-medium">
+                        <option value="en" selected>English (Official Standard)</option>
+                        <option value="hi">हिन्दी (Hindi)</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 flex flex-col sm:flex-row items-center gap-2">
+                    <button 
+                        type="submit" 
+                        id="telecomSubmitBtn" 
+                        class="w-full sm:flex-1 h-10 bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs rounded px-4 flex items-center justify-center gap-2 shadow-sm transition"
+                    >
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        <span id="telecomSubmitBtnText">Subscribe to District Advisories</span>
+                    </button>
+                    <button 
+                        type="button" 
+                        onclick="sendTelecomTestBroadcast()" 
+                        id="telecomTestBtn" 
+                        class="w-full sm:w-auto h-10 bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-300 font-semibold text-xs rounded px-3 flex items-center justify-center gap-1.5 transition"
+                    >
+                        <i data-lucide="send" class="w-3.5 h-3.5 text-blue-800"></i>
+                        <span>Send Test Alert</span>
+                    </button>
+                </div>
+
+                <!-- Live Dispatch Status Banner -->
+                <div id="telecomStatusBox" class="hidden mt-3 p-3.5 rounded-lg border text-xs leading-relaxed space-y-2">
+                    <div id="telecomStatusHeader" class="flex items-center gap-2 font-bold text-xs">
+                        <i id="telecomStatusIcon" data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span id="telecomStatusTitle">Alert Dispatched Successfully</span>
+                    </div>
+                    <div id="telecomStatusDetails" class="font-mono text-[11px] bg-white p-2.5 rounded border border-slate-200 text-slate-800 whitespace-pre-line"></div>
+                </div>
+
+            </form>
+
+            <!-- Modal Footer Attribution -->
+            <div class="px-5 py-2.5 bg-slate-100 border-t border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
+                <span>Under mandate of NDMA / MoES Telecom Warning Cell</span>
+                <span class="font-mono text-slate-600">DLT Verified Entity</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Official Government Portal Footer -->
     <footer class="bg-slate-900 text-slate-400 text-xs border-t border-slate-800 mt-12 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
@@ -668,6 +825,7 @@
             initBrowserSpeechRecognition();
             await registerServiceWorker();
             updateNotificationButtonUI();
+            updateTelecomButtonUI();
             initAutoGeolocationOnLoad();
         });
 
@@ -935,6 +1093,225 @@
                 };
             } catch (notifErr) {
                 console.warn("Native Window Notification dispatch error:", notifErr);
+            }
+        }
+
+        // =========================================================================
+        // CITIZEN TELECOM ALERT SUBSCRIPTION (SMS & FEATURE PHONE IVR BROADCAST)
+        // =========================================================================
+
+        function updateTelecomButtonUI() {
+            const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
+            const isSubscribed = localStorage.getItem('weathergpt_telecom_subscribed') === 'true';
+            const btnText = document.getElementById("telecomBtnText");
+            if (btnText && savedPhone && isSubscribed) {
+                const masked = savedPhone.length >= 10 
+                    ? `+91 ${savedPhone.slice(0, 2)}•••••${savedPhone.slice(-3)}`
+                    : savedPhone;
+                btnText.textContent = `📱 Subscribed (${masked})`;
+            }
+        }
+
+        function openTelecomModal() {
+            const modal = document.getElementById("telecomModal");
+            const districtLabel = document.getElementById("telecomModalDistrict");
+            const phoneInput = document.getElementById("telecomPhoneInput");
+            const langSelect = document.getElementById("telecomLangSelect");
+            const smsCheck = document.getElementById("channelSms");
+            const ivrCheck = document.getElementById("channelVoice");
+
+            // Update district label from current view
+            if (districtLabel) {
+                districtLabel.textContent = currentLocation || "Khordha, Odisha";
+            }
+
+            // Restore saved values from localStorage
+            const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
+            if (savedPhone && phoneInput) {
+                phoneInput.value = savedPhone;
+            }
+            const savedLang = localStorage.getItem('weathergpt_telecom_lang');
+            if (savedLang && langSelect) {
+                langSelect.value = savedLang;
+            }
+            if (localStorage.getItem('weathergpt_telecom_sms') !== null && smsCheck) {
+                smsCheck.checked = localStorage.getItem('weathergpt_telecom_sms') === 'true';
+            }
+            if (localStorage.getItem('weathergpt_telecom_ivr') !== null && ivrCheck) {
+                ivrCheck.checked = localStorage.getItem('weathergpt_telecom_ivr') === 'true';
+            }
+
+            if (modal) {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+            lucide.createIcons();
+        }
+
+        function closeTelecomModal() {
+            const modal = document.getElementById("telecomModal");
+            if (modal) {
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeTelecomModal();
+            }
+        });
+
+        // Close modal on backdrop click
+        document.addEventListener("click", (e) => {
+            const modal = document.getElementById("telecomModal");
+            if (e.target === modal) {
+                closeTelecomModal();
+            }
+        });
+
+        async function submitTelecomSubscription() {
+            const phoneInput = document.getElementById("telecomPhoneInput");
+            const cleanPhone = phoneInput.value.replace(/\D/g, "");
+
+            if (cleanPhone.length < 10) {
+                alert("Please enter a valid 10-digit Indian mobile number (+91).");
+                phoneInput.focus();
+                return;
+            }
+
+            const smsCheck = document.getElementById("channelSms").checked;
+            const ivrCheck = document.getElementById("channelVoice").checked;
+
+            if (!smsCheck && !ivrCheck) {
+                alert("Please select at least one delivery channel (SMS or Automated Voice Call).");
+                return;
+            }
+
+            const lang = document.getElementById("telecomLangSelect").value;
+            const district = currentLocation || "Khordha, Odisha";
+
+            // Save preferences
+            localStorage.setItem('weathergpt_telecom_phone', cleanPhone);
+            localStorage.setItem('weathergpt_telecom_sms', smsCheck.toString());
+            localStorage.setItem('weathergpt_telecom_ivr', ivrCheck.toString());
+            localStorage.setItem('weathergpt_telecom_lang', lang);
+            localStorage.setItem('weathergpt_telecom_subscribed', 'true');
+
+            // Dispatch registration confirmation via broadcast endpoint
+            await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, true);
+            updateTelecomButtonUI();
+        }
+
+        async function sendTelecomTestBroadcast() {
+            const phoneInput = document.getElementById("telecomPhoneInput");
+            const cleanPhone = phoneInput.value.replace(/\D/g, "");
+
+            if (cleanPhone.length < 10) {
+                alert("Please enter a valid 10-digit Indian mobile number (+91) to send a test alert.");
+                phoneInput.focus();
+                return;
+            }
+
+            const smsCheck = document.getElementById("channelSms").checked;
+            const ivrCheck = document.getElementById("channelVoice").checked;
+            const lang = document.getElementById("telecomLangSelect").value;
+            const district = currentLocation || "Khordha, Odisha";
+
+            await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, false);
+        }
+
+        async function executeTelecomBroadcast(phone, district, language, enableSms, enableIvr, isSubscription = false) {
+            const submitBtn = document.getElementById("telecomSubmitBtn");
+            const submitBtnText = document.getElementById("telecomSubmitBtnText");
+            const testBtn = document.getElementById("telecomTestBtn");
+            const statusBox = document.getElementById("telecomStatusBox");
+            const statusTitle = document.getElementById("telecomStatusTitle");
+            const statusDetails = document.getElementById("telecomStatusDetails");
+            const statusIcon = document.getElementById("telecomStatusIcon");
+
+            if (submitBtn) submitBtn.disabled = true;
+            if (testBtn) testBtn.disabled = true;
+            if (submitBtnText) submitBtnText.textContent = "Dispatched via Gateway...";
+
+            const channels = [];
+            if (enableSms) channels.push("sms");
+            if (enableIvr) channels.push("voice_ivr");
+
+            const currentAlert = latestApiResponse?.alert || { level: "GREEN", hazard_type: "Routine Weather Observation" };
+            const currentTel = latestApiResponse?.telemetry || { temperature_c: 28.0, wind_speed_kmh: 12.0, condition: "Clear Sky" };
+
+            try {
+                const response = await fetch("/api/telecom/broadcast", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone_number: phone,
+                        district: district,
+                        alert_level: currentAlert.level,
+                        hazard_type: currentAlert.hazard_type,
+                        condition: currentTel.condition,
+                        temperature_c: currentTel.temperature_c,
+                        wind_speed_kmh: currentTel.wind_speed_kmh,
+                        channels: channels,
+                        language: language
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.detail || `Gateway error HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Show Success State with NDMA / CAP formatting
+                if (statusBox) {
+                    statusBox.className = "mt-3 p-3.5 rounded-lg border border-emerald-300 bg-emerald-50 text-xs leading-relaxed space-y-2 block";
+                }
+                if (statusTitle) {
+                    statusTitle.className = "font-bold text-xs text-emerald-950";
+                    statusTitle.textContent = isSubscription
+                        ? `Subscription Confirmed: Alert dispatched to ${result.recipient} via SMS Gateway & IVR Broadcast`
+                        : `Test Alert dispatched to ${result.recipient} via SMS Gateway & IVR Broadcast`;
+                }
+                if (statusIcon) {
+                    statusIcon.setAttribute("data-lucide", "check-circle-2");
+                    statusIcon.className = "w-4 h-4 text-emerald-700";
+                }
+                if (statusDetails) {
+                    statusDetails.textContent = 
+                        `[GATEWAY MSG ID] : ${result.gateway_message_id}\n` +
+                        `[CAP TRACE URN]  : ${result.cap_urn}\n` +
+                        `[RECIPIENT]      : ${result.recipient} (${result.district})\n` +
+                        `[DISPATCH STATUS]: ${result.delivery_status} [TRAI DLT Registered Entity]\n` +
+                        `[CHANNELS]       : ${result.channels_dispatched.join(" + ")}\n` +
+                        `[SMS TEXT]       : ${result.sms_payload}\n` +
+                        `[IVR OUTDIAL]    : "${result.ivr_payload}"`;
+                }
+
+            } catch (err) {
+                console.error("Telecom broadcast error:", err);
+                if (statusBox) {
+                    statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
+                }
+                if (statusTitle) {
+                    statusTitle.className = "font-bold text-xs text-red-950";
+                    statusTitle.textContent = "Telecom Broadcast Error";
+                }
+                if (statusIcon) {
+                    statusIcon.setAttribute("data-lucide", "alert-circle");
+                    statusIcon.className = "w-4 h-4 text-red-700";
+                }
+                if (statusDetails) {
+                    statusDetails.textContent = `Error: ${err.message}\nPlease verify the mobile number and try again.`;
+                }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (testBtn) testBtn.disabled = false;
+                if (submitBtnText) submitBtnText.textContent = isSubscription ? "Update Subscription" : "Subscribe to District Advisories";
+                lucide.createIcons();
             }
         }
 
