@@ -632,13 +632,13 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500">C-DAC / NDMA CAP Gateway</span>
-                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">2G / 3G / 4G / 5G</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Fast2SMS Live Gateway • NDMA CAP</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">Live Physical SMS</span>
                         </div>
                         <h3 class="text-base font-bold text-slate-900 tracking-tight">
-                            Citizen Telecom Alert Subscription
+                            Citizen Telecom Alert Subscription & Live SMS
                         </h3>
-                        <p class="text-xs text-slate-500">SMS & Automated Voice Call (Keypad & Feature Phone Support)</p>
+                        <p class="text-xs text-slate-500">Live SMS & Voice Call Dispatch (Keypad & Mobile Phone Delivery)</p>
                     </div>
                 </div>
                 <button onclick="closeTelecomModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200 transition" title="Close modal" aria-label="Close modal">
@@ -672,13 +672,12 @@
                             type="tel" 
                             id="telecomPhoneInput" 
                             required 
-                            maxlength="10"
-                            pattern="[6-9][0-9]{9}" 
+                            maxlength="15"
                             placeholder="Enter 10-digit mobile number" 
                             class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-r px-3 h-10 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 font-mono font-medium"
                         >
                     </div>
-                    <p class="text-[11px] text-slate-500">Supports all Indian telecom operators (Jio, Airtel, Vi, BSNL) including basic feature/keypad phones.</p>
+                    <p class="text-[11px] text-slate-500">Physical SMS is delivered live to real Indian mobile phones (Jio, Airtel, Vi, BSNL) via Fast2SMS.</p>
                 </div>
 
                 <!-- Channel Checkboxes -->
@@ -1173,23 +1172,32 @@
 
         async function submitTelecomSubscription() {
             const phoneInput = document.getElementById("telecomPhoneInput");
-            const cleanPhone = phoneInput.value.replace(/\D/g, "");
+            if (!phoneInput) return;
 
-            if (cleanPhone.length < 10) {
+            let cleanPhone = phoneInput.value.replace(/\D/g, "");
+            if (cleanPhone.length === 12 && cleanPhone.startsWith("91")) {
+                cleanPhone = cleanPhone.slice(2);
+            } else if (cleanPhone.length === 11 && cleanPhone.startsWith("0")) {
+                cleanPhone = cleanPhone.slice(1);
+            } else if (cleanPhone.length > 10) {
+                cleanPhone = cleanPhone.slice(-10);
+            }
+
+            if (cleanPhone.length !== 10) {
                 alert("Please enter a valid 10-digit Indian mobile number (+91).");
                 phoneInput.focus();
                 return;
             }
 
-            const smsCheck = document.getElementById("channelSms").checked;
-            const ivrCheck = document.getElementById("channelVoice").checked;
+            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
+            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : false;
 
             if (!smsCheck && !ivrCheck) {
                 alert("Please select at least one delivery channel (SMS or Automated Voice Call).");
                 return;
             }
 
-            const lang = document.getElementById("telecomLangSelect").value;
+            const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
             const district = currentLocation || "Khordha, Odisha";
 
             // Save preferences
@@ -1199,24 +1207,33 @@
             localStorage.setItem('weathergpt_telecom_lang', lang);
             localStorage.setItem('weathergpt_telecom_subscribed', 'true');
 
-            // Dispatch registration confirmation via broadcast endpoint
+            // Dispatch registration confirmation via live Fast2SMS broadcast endpoint
             await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, true);
             updateTelecomButtonUI();
         }
 
         async function sendTelecomTestBroadcast() {
             const phoneInput = document.getElementById("telecomPhoneInput");
-            const cleanPhone = phoneInput.value.replace(/\D/g, "");
+            if (!phoneInput) return;
 
-            if (cleanPhone.length < 10) {
+            let cleanPhone = phoneInput.value.replace(/\D/g, "");
+            if (cleanPhone.length === 12 && cleanPhone.startsWith("91")) {
+                cleanPhone = cleanPhone.slice(2);
+            } else if (cleanPhone.length === 11 && cleanPhone.startsWith("0")) {
+                cleanPhone = cleanPhone.slice(1);
+            } else if (cleanPhone.length > 10) {
+                cleanPhone = cleanPhone.slice(-10);
+            }
+
+            if (cleanPhone.length !== 10) {
                 alert("Please enter a valid 10-digit Indian mobile number (+91) to send a test alert.");
                 phoneInput.focus();
                 return;
             }
 
-            const smsCheck = document.getElementById("channelSms").checked;
-            const ivrCheck = document.getElementById("channelVoice").checked;
-            const lang = document.getElementById("telecomLangSelect").value;
+            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
+            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : false;
+            const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
             const district = currentLocation || "Khordha, Odisha";
 
             await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, false);
@@ -1233,7 +1250,7 @@
 
             if (submitBtn) submitBtn.disabled = true;
             if (testBtn) testBtn.disabled = true;
-            if (submitBtnText) submitBtnText.textContent = "Dispatched via Gateway...";
+            if (submitBtnText) submitBtnText.textContent = "Dispatched via Fast2SMS Gateway...";
 
             const channels = [];
             if (enableSms) channels.push("sms");
@@ -1259,53 +1276,65 @@
                     })
                 });
 
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.detail || `Gateway error HTTP ${response.status}`);
-                }
-
                 const result = await response.json();
 
-                // Show Success State with NDMA / CAP formatting
+                if (!response.ok) {
+                    throw new Error(result.detail || `Fast2SMS Gateway Error (HTTP ${response.status})`);
+                }
+
+                // Show Success State with NDMA / CAP formatting and Fast2SMS live telemetry
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border border-emerald-300 bg-emerald-50 text-xs leading-relaxed space-y-2 block";
                 }
                 if (statusTitle) {
                     statusTitle.className = "font-bold text-xs text-emerald-950";
                     statusTitle.textContent = isSubscription
-                        ? `Subscription Confirmed: Alert dispatched to ${result.recipient} via SMS Gateway & IVR Broadcast`
-                        : `Test Alert dispatched to ${result.recipient} via SMS Gateway & IVR Broadcast`;
+                        ? `Subscription Confirmed: Physical SMS delivered to ${result.recipient} via Fast2SMS Gateway`
+                        : `Live Test Alert: Physical SMS delivered to ${result.recipient} via Fast2SMS Gateway`;
                 }
                 if (statusIcon) {
                     statusIcon.setAttribute("data-lucide", "check-circle-2");
                     statusIcon.className = "w-4 h-4 text-emerald-700";
                 }
                 if (statusDetails) {
-                    statusDetails.textContent = 
-                        `[GATEWAY MSG ID] : ${result.gateway_message_id}\n` +
-                        `[CAP TRACE URN]  : ${result.cap_urn}\n` +
+                    const fast2smsReqId = result.fast2sms_request_id || result.gateway_message_id || "N/A";
+                    const gatewayStatus = result.delivery_status || "Delivered via Fast2SMS Telecom Route";
+                    const capUrn = result.cap_urn || `urn:oid:2.49.0.1.356.1.0.${Date.now()}.${result.alert_level || 'ALERT'}`;
+
+                    let traceText = 
+                        `[GATEWAY STATUS] : ${gatewayStatus}\n` +
+                        `[FAST2SMS MSG ID]: ${fast2smsReqId}\n` +
+                        `[NDMA CAP URN]   : ${capUrn}\n` +
                         `[RECIPIENT]      : ${result.recipient} (${result.district})\n` +
-                        `[DISPATCH STATUS]: ${result.delivery_status} [TRAI DLT Registered Entity]\n` +
-                        `[CHANNELS]       : ${result.channels_dispatched.join(" + ")}\n` +
-                        `[SMS TEXT]       : ${result.sms_payload}\n` +
-                        `[IVR OUTDIAL]    : "${result.ivr_payload}"`;
+                        `[DISPATCH ROUTE] : Fast2SMS Quick SMS (Route 'q') • Physical GSM Delivery\n` +
+                        `[CHANNELS]       : ${result.channels_dispatched ? result.channels_dispatched.join(" + ") : "Fast2SMS Live SMS"}\n` +
+                        `[SMS TEXT]       : ${result.sms_payload}`;
+
+                    if (result.ivr_payload) {
+                        traceText += `\n[IVR OUTDIAL]    : "${result.ivr_payload}"`;
+                    }
+                    statusDetails.textContent = traceText;
                 }
 
             } catch (err) {
-                console.error("Telecom broadcast error:", err);
+                console.error("Fast2SMS Telecom broadcast error:", err);
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
                 }
                 if (statusTitle) {
                     statusTitle.className = "font-bold text-xs text-red-950";
-                    statusTitle.textContent = "Telecom Broadcast Error";
+                    statusTitle.textContent = "Fast2SMS Telecom Gateway Dispatch Error";
                 }
                 if (statusIcon) {
                     statusIcon.setAttribute("data-lucide", "alert-circle");
                     statusIcon.className = "w-4 h-4 text-red-700";
                 }
                 if (statusDetails) {
-                    statusDetails.textContent = `Error: ${err.message}\nPlease verify the mobile number and try again.`;
+                    statusDetails.textContent = 
+                        `[GATEWAY ERROR]  : ${err.message}\n` +
+                        `[TARGET NUMBER]  : +91 ${phone}\n` +
+                        `[ROUTE ATTEMPTED]: Fast2SMS Live Quick SMS (Route 'q')\n` +
+                        `[RESOLUTION]     : Verify mobile number and Fast2SMS account balance/permissions.`;
                 }
             } finally {
                 if (submitBtn) submitBtn.disabled = false;

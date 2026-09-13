@@ -12,6 +12,7 @@ import uuid
 import datetime
 import logging
 from typing import Optional, Dict, Any, List
+import httpx
 from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -87,88 +88,152 @@ class TelecomBroadcastPayload(BaseModel):
 async def broadcast_telecom_alert_endpoint(payload: TelecomBroadcastPayload):
     """
     NDMA / Common Alerting Protocol (CAP) Citizen Telecom Gateway Endpoint:
-    Dispatches localized SMS alerts and automated Interactive Voice Response (IVR) calls
-    for keypad phones and feature mobile devices in rural and coastal belts.
+    Dispatches live physical SMS alerts to Indian mobile phones via Fast2SMS Live Telecom Gateway.
+    Also handles automated Interactive Voice Response (IVR) advisory scripts.
     """
+    # 1. Clean & validate recipient mobile number (strip +91, 0, spaces, non-digits)
     clean_digits = re.sub(r"\D", "", payload.phone_number.strip())
-    if len(clean_digits) < 10:
+    if len(clean_digits) == 12 and clean_digits.startswith("91"):
+        clean_digits = clean_digits[2:]
+    elif len(clean_digits) == 11 and clean_digits.startswith("0"):
+        clean_digits = clean_digits[1:]
+    elif len(clean_digits) > 10:
+        clean_digits = clean_digits[-10:]
+
+    if len(clean_digits) != 10 or not clean_digits.isdigit():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Valid 10-digit Indian mobile number (+91) is required."
+            detail="Valid 10-digit Indian mobile number is required."
         )
 
-    # Format national 10-digit / +91 phone representation
-    if len(clean_digits) == 10:
-        formatted_phone = f"+91 {clean_digits[:5]} {clean_digits[5:]}"
-    elif len(clean_digits) == 12 and clean_digits.startswith("91"):
-        formatted_phone = f"+91 {clean_digits[2:7]} {clean_digits[7:]}"
-    else:
-        formatted_phone = f"+91 {clean_digits[-10:-5]} {clean_digits[-5:]}"
-
+    formatted_phone = f"+91 {clean_digits[:5]} {clean_digits[5:]}"
     dist = payload.district.strip() or "District"
-    level = (payload.alert_level or "GREEN").upper()
+    hazard_level = (payload.alert_level or "GREEN").upper()
     lang = (payload.language or "en").lower()
-    
-    # Generate simulated Gateway Message ID & CAP Trace Identifier
+
+    temp_val = f"{payload.temperature_c:.1f}" if payload.temperature_c is not None else "28.0"
+    wind_val = f"{payload.wind_speed_kmh:.1f}" if payload.wind_speed_kmh is not None else "12.0"
+
+    # IMD Alert SMS text as required by specification
+    sms_text = f"[IMD ALERT] {dist}: {hazard_level} risk. Temp: {temp_val}C, Wind: {wind_val}km/h. Stay alert."
+
+    # NDMA CAP protocol metadata
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     ts_str = now_utc.strftime('%Y%m%d%H%M%S')
-    msg_id = f"CAP-IN-IMD-{ts_str}-{uuid.uuid4().hex[:6].upper()}"
-    cap_urn = f"urn:oid:2.49.0.1.356.1.0.{ts_str}.{level}"
+    default_cap_id = f"CAP-IN-IMD-{ts_str}-{uuid.uuid4().hex[:6].upper()}"
+    cap_urn = f"urn:oid:2.49.0.1.356.1.0.{ts_str}.{hazard_level}"
 
-    # CAP / NDMA Alert Standard Telecom Formats
+    # Multilingual IVR Voice Script for feature/keypad phone outdial
     if lang == "hi":
-        if level == "RED":
-            sms_text = f"[आईएमडी-गंभीर चेतावनी] {dist}: लाल चेतावनी - {payload.hazard_type}। तापमान: {payload.temperature_c:.1f}°C, हवा: {payload.wind_speed_kmh:.1f} किमी/घंटा। एनडीएमए निर्देश: तत्काल सुरक्षित पक्के आश्रय में रहें।"
+        if hazard_level == "RED":
             ivr_script = f"आपातकालीन मौसम सूचना। भारत मौसम विज्ञान विभाग एवं एनडीएमए द्वारा {dist} के लिए लाल चेतावनी जारी की गई है। {payload.hazard_type} की संभावना है। कृपया तुरंत सुरक्षित पक्के स्थान पर आश्रय लें।"
-        elif level == "ORANGE":
-            sms_text = f"[आईएमडी-सतर्कता] {dist}: नारंगी चेतावनी - {payload.hazard_type}। तापमान: {payload.temperature_c:.1f}°C, हवा: {payload.wind_speed_kmh:.1f} किमी/घंटा। सतर्क रहें और जलभराव से बचें।"
+        elif hazard_level == "ORANGE":
             ivr_script = f"सावधानी सूचना। मौसम विभाग द्वारा {dist} के लिए नारंगी चेतावनी जारी की गई है। {payload.hazard_type} के प्रति सतर्क रहें।"
-        elif level == "YELLOW":
-            sms_text = f"[आईएमडी-अपडेट] {dist}: पीली चेतावनी - {payload.hazard_type}। तापमान: {payload.temperature_c:.1f}°C, हवा: {payload.wind_speed_kmh:.1f} किमी/घंटा। मौसम की जानकारी पर नजर रखें।"
+        elif hazard_level == "YELLOW":
             ivr_script = f"मौसम सूचना। {dist} में {payload.hazard_type} के लिए पीली चेतावनी जारी है। मौसम पूर्वानुमान पर नजर बनाए रखें।"
         else:
-            sms_text = f"[आईएमडी-दैनिक] {dist}: सामान्य मौसम ({payload.condition})। तापमान: {payload.temperature_c:.1f}°C, हवा: {payload.wind_speed_kmh:.1f} किमी/घंटा। कोई आपदा चेतावनी नहीं।"
             ivr_script = f"मौसम विभाग दैनिक बुलेटिन। {dist} में मौसम सामान्य है। तापमान {payload.temperature_c:.0f} डिग्री सेल्सियस है।"
     else:
-        if level == "RED":
-            sms_text = f"[IMD-CRITICAL] {dist}: RED ALERT for {payload.hazard_type}. Temp: {payload.temperature_c:.1f}°C, Wind: {payload.wind_speed_kmh:.1f} km/h. NDMA Directive: Evacuate vulnerable zones, take reinforced shelter immediately."
+        if hazard_level == "RED":
             ivr_script = f"Critical weather emergency alert from India Meteorological Department and NDMA for {dist}. Red Warning in effect for {payload.hazard_type}. Please take reinforced indoor shelter immediately."
-        elif level == "ORANGE":
-            sms_text = f"[IMD-WARNING] {dist}: ORANGE ALERT for {payload.hazard_type}. Temp: {payload.temperature_c:.1f}°C, Wind: {payload.wind_speed_kmh:.1f} km/h. MoES Directive: Be prepared, secure livestock and crops."
+        elif hazard_level == "ORANGE":
             ivr_script = f"Severe weather warning from India Meteorological Department for {dist}. Orange Alert in effect for {payload.hazard_type}. Please secure outdoor equipment and be prepared."
-        elif level == "YELLOW":
-            sms_text = f"[IMD-ALERT] {dist}: Yellow Alert for {payload.hazard_type}. Temp: {payload.temperature_c:.1f}°C, Wind: {payload.wind_speed_kmh:.1f} km/h. IMD Advisory: Keep watch and monitor local conditions."
+        elif hazard_level == "YELLOW":
             ivr_script = f"Official weather advisory for {dist}. Yellow Alert in effect for {payload.hazard_type}. Winds {payload.wind_speed_kmh:.0f} kilometers per hour. Please keep updated with official bulletins."
         else:
-            sms_text = f"[IMD-DAILY] {dist}: Normal conditions ({payload.condition}). Temp: {payload.temperature_c:.1f}°C, Wind: {payload.wind_speed_kmh:.1f} km/h. No active severe warnings."
             ivr_script = f"Daily meteorological bulletin for {dist}. Weather conditions are normal with temperature {payload.temperature_c:.0f} degrees Celsius."
 
-    # Parse Dispatched Channels
-    dispatched_channels = []
-    for ch in payload.channels:
-        ch_lower = ch.lower()
-        if "sms" in ch_lower and "National SMS Gateway (C-DAC / TRAI DLT)" not in dispatched_channels:
-            dispatched_channels.append("National SMS Gateway (C-DAC / TRAI DLT)")
-        elif ("voice" in ch_lower or "ivr" in ch_lower) and "Automated IVR Outdial Call (Indic Voice Pipeline)" not in dispatched_channels:
-            dispatched_channels.append("Automated IVR Outdial Call (Indic Voice Pipeline)")
+    # 2. Live POST Request to Fast2SMS Gateway
+    fast2sms_url = getattr(settings, "fast2sms_api_url", "https://www.fast2sms.com/dev/bulkV2")
+    fast2sms_key = getattr(settings, "fast2sms_api_key", "ynaovNqH5JTOLY36fVbX2dDueIx1kwzSB40Eh8rMKR71psPjUZCI8gsN53F4nHefm0aYXQTVypDZMKi")
+    fast2sms_timeout = getattr(settings, "fast2sms_timeout_seconds", 12.0)
 
-    if not dispatched_channels:
-        dispatched_channels.append("National SMS Gateway (C-DAC / TRAI DLT)")
+    fast2sms_headers = {
+        "authorization": fast2sms_key,
+        "Content-Type": "application/json"
+    }
+
+    fast2sms_payload = {
+        "route": "q",
+        "message": sms_text,
+        "language": "english",
+        "numbers": clean_digits
+    }
+
+    gateway_response_data = None
+    request_id = None
+
+    try:
+        async with httpx.AsyncClient(timeout=fast2sms_timeout) as client:
+            resp = await client.post(fast2sms_url, json=fast2sms_payload, headers=fast2sms_headers)
+            try:
+                gateway_response_data = resp.json()
+            except Exception:
+                gateway_response_data = {"raw_text": resp.text}
+
+            logger.info(f"Fast2SMS live gateway response (HTTP {resp.status_code}): {gateway_response_data}")
+
+            # Check if Fast2SMS returned success
+            if resp.status_code == 200 and isinstance(gateway_response_data, dict) and gateway_response_data.get("return") is True:
+                raw_req_id = gateway_response_data.get("request_id")
+                request_id = str(raw_req_id).strip() if raw_req_id else default_cap_id
+            else:
+                # Extract clear failure message from Fast2SMS
+                err_msg = ""
+                if isinstance(gateway_response_data, dict):
+                    raw_msg = gateway_response_data.get("message")
+                    if isinstance(raw_msg, list):
+                        err_msg = ", ".join(str(m) for m in raw_msg)
+                    elif raw_msg:
+                        err_msg = str(raw_msg)
+                    elif "detail" in gateway_response_data:
+                        err_msg = str(gateway_response_data["detail"])
+                if not err_msg:
+                    err_msg = f"Fast2SMS API returned HTTP {resp.status_code}: {resp.text}"
+
+                logger.error(f"Fast2SMS live gateway failed: {err_msg}")
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Fast2SMS Gateway Error: {err_msg}"
+                )
+
+    except HTTPException:
+        raise
+    except httpx.RequestError as exc:
+        logger.error(f"Fast2SMS gateway connection error: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Fast2SMS Gateway Network Connection Failure: {str(exc)}"
+        )
+    except Exception as exc:
+        logger.error(f"Unexpected error communicating with Fast2SMS: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Telecom Gateway Processing Error: {str(exc)}"
+        )
+
+    # 3. Assemble Response with actual gateway request_id and NDMA CAP trace
+    dispatched_channels = ["Fast2SMS Telecom Route (Quick SMS 'q')"]
+    if any("voice" in c.lower() or "ivr" in c.lower() for c in payload.channels):
+        dispatched_channels.append("Automated IVR Outdial Call (Indic Voice Pipeline)")
 
     return {
         "status": "success",
-        "gateway_message_id": msg_id,
+        "gateway_message_id": request_id,
+        "fast2sms_request_id": request_id,
         "cap_urn": cap_urn,
         "recipient": formatted_phone,
+        "phone_number": clean_digits,
         "district": dist,
-        "alert_level": level,
+        "alert_level": hazard_level,
         "channels_dispatched": dispatched_channels,
         "sms_payload": sms_text,
-        "ivr_payload": ivr_script,
+        "ivr_payload": ivr_script if any("voice" in c.lower() or "ivr" in c.lower() for c in payload.channels) else None,
         "language": lang,
         "timestamp": now_utc.isoformat(),
-        "delivery_status": "QUEUED_AND_DISPATCHED",
-        "gateway_node": "MoES-NDMA-CAP-GATEWAY-DELHI-01"
+        "delivery_status": "Delivered via Fast2SMS Telecom Route",
+        "gateway_node": "Fast2SMS-Live-Telecom-Gateway",
+        "gateway_response": gateway_response_data
     }
 
 

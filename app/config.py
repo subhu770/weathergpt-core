@@ -58,6 +58,20 @@ class Settings(BaseSettings):
         description="HTTP request timeout for Bhashini pipeline requests in seconds"
     )
 
+    # Fast2SMS Live Telecom SMS Gateway Config
+    fast2sms_api_key: str = Field(
+        default="ynaovNqH5JTOLY36fVbX2dDueIx1kwzSB40Eh8rMKR71psPjUZCI8gsN53F4nHefm0aYXQTVypDZMKi",
+        description="Fast2SMS Authorization / API Key for live physical SMS dispatch"
+    )
+    fast2sms_api_url: str = Field(
+        default="https://www.fast2sms.com/dev/bulkV2",
+        description="Fast2SMS Bulk V2 POST Endpoint"
+    )
+    fast2sms_timeout_seconds: float = Field(
+        default=12.0,
+        description="HTTP request timeout for Fast2SMS gateway requests in seconds"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
