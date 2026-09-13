@@ -145,11 +145,11 @@ async def broadcast_telecom_alert_endpoint(payload: TelecomBroadcastPayload):
 
     # 2. Live POST Request to Fast2SMS Gateway
     fast2sms_url = getattr(settings, "fast2sms_api_url", "https://www.fast2sms.com/dev/bulkV2")
-    fast2sms_key = getattr(settings, "fast2sms_api_key", "ynaovNqH5JTOLY36fVbX2dDueIx1kwzSB40Eh8rMKR71psPjUZCI8gsN53F4nHefm0aYXQTVypDZMKi")
+    fast2sms_key = getattr(settings, "fast2sms_api_key", "VmkhZTYac57v1uluKI8HOBjFCm6ItczeTLgZfVAsDA7JCEZrbHzxmSMHHcG9")
     fast2sms_timeout = getattr(settings, "fast2sms_timeout_seconds", 12.0)
 
     fast2sms_headers = {
-        "authorization": fast2sms_key,
+        "authorization": fast2sms_key or "VmkhZTYac57v1uluKI8HOBjFCm6ItczeTLgZfVAsDA7JCEZrbHzxmSMHHcG9",
         "Content-Type": "application/json"
     }
 

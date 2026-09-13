@@ -60,7 +60,7 @@ class Settings(BaseSettings):
 
     # Fast2SMS Live Telecom SMS Gateway Config
     fast2sms_api_key: str = Field(
-        default="ynaovNqH5JTOLY36fVbX2dDueIx1kwzSB40Eh8rMKR71psPjUZCI8gsN53F4nHefm0aYXQTVypDZMKi",
+        default="VmkhZTYac57v1uluKI8HOBjFCm6ItczeTLgZfVAsDA7JCEZrbHzxmSMHHcG9",
         description="Fast2SMS Authorization / API Key for live physical SMS dispatch"
     )
     fast2sms_api_url: str = Field(
