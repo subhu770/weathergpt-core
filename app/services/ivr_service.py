@@ -113,8 +113,11 @@ class TwilioIVRService:
                 resolved_lat = 20.2961
                 resolved_lon = 85.8245
 
-        # Construct Webhook URL
-        clean_base_url = (settings.twilio_webhook_base_url or base_url or "").rstrip("/")
+        # Construct Webhook URL with production public default
+        clean_base_url = (settings.twilio_webhook_base_url or base_url or "https://weathergpt-core.vercel.app").rstrip("/")
+        if "localhost" in clean_base_url or "127.0.0.1" in clean_base_url or not clean_base_url.startswith("http"):
+            clean_base_url = "https://weathergpt-core.vercel.app"
+
         query_params = {
             "district": dist,
             "lat": f"{resolved_lat:.4f}",
@@ -127,14 +130,15 @@ class TwilioIVRService:
 
         try:
             client = self.get_client()
+            # STRICTLY only standard trial-compatible parameters: to, from_, url
             call = client.calls.create(
                 to=to_phone,
                 from_=from_phone,
-                url=webhook_url,
-                method="POST"
+                url=webhook_url
             )
 
             logger.info(f"Twilio call successfully queued. Call SID: {call.sid}")
+
             return {
                 "status": "success",
                 "call_sid": call.sid,
@@ -222,7 +226,10 @@ class TwilioIVRService:
         vr.pause(length=1)
 
         # 2. DTMF Gather for Language Selection (1=English, 2=Hindi)
-        clean_base_url = (settings.twilio_webhook_base_url or base_url or "").rstrip("/")
+        clean_base_url = (settings.twilio_webhook_base_url or base_url or "https://weathergpt-core.vercel.app").rstrip("/")
+        if "localhost" in clean_base_url or "127.0.0.1" in clean_base_url or not clean_base_url.startswith("http"):
+            clean_base_url = "https://weathergpt-core.vercel.app"
+
         action_params = {
             "district": dist_name,
             "lat": f"{resolved_lat:.4f}",
@@ -269,7 +276,10 @@ class TwilioIVRService:
         resolved_lat = lat if lat is not None else 20.2961
         resolved_lon = lon if lon is not None else 85.8245
 
-        clean_base_url = (settings.twilio_webhook_base_url or base_url or "").rstrip("/")
+        clean_base_url = (settings.twilio_webhook_base_url or base_url or "https://weathergpt-core.vercel.app").rstrip("/")
+        if "localhost" in clean_base_url or "127.0.0.1" in clean_base_url or not clean_base_url.startswith("http"):
+            clean_base_url = "https://weathergpt-core.vercel.app"
+
         action_params = {
             "district": dist_name,
             "lang": lang,

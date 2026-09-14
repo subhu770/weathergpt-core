@@ -344,7 +344,11 @@ async def ivr_welcome_endpoint(
         lon=parsed_lon,
         base_url=base_url
     )
-    return Response(content=twiml_xml, media_type="application/xml")
+    return Response(
+        content=twiml_xml,
+        media_type="application/xml",
+        headers={"Content-Type": "application/xml; charset=utf-8"}
+    )
 
 
 @app.api_route("/api/ivr/menu", methods=["GET", "POST"])
@@ -380,7 +384,11 @@ async def ivr_menu_endpoint(
         lon=parsed_lon,
         base_url=base_url
     )
-    return Response(content=twiml_xml, media_type="application/xml")
+    return Response(
+        content=twiml_xml,
+        media_type="application/xml",
+        headers={"Content-Type": "application/xml; charset=utf-8"}
+    )
 
 
 @app.api_route("/api/ivr/action", methods=["GET", "POST"])
@@ -418,7 +426,11 @@ async def ivr_action_endpoint(
         caller_phone=caller_phone,
         call_sid=call_sid
     )
-    return Response(content=twiml_xml, media_type="application/xml")
+    return Response(
+        content=twiml_xml,
+        media_type="application/xml",
+        headers={"Content-Type": "application/xml; charset=utf-8"}
+    )
 
 
 @app.get("/api/ivr/sos-events")

@@ -101,9 +101,10 @@ class Settings(BaseSettings):
         description="Default Target Phone Number for Live Emergency Alerts"
     )
     twilio_webhook_base_url: str = Field(
-        default="",
-        description="Public base URL for Twilio Webhooks (e.g., https://your-domain.com or ngrok URL)"
+        default="https://weathergpt-core.vercel.app",
+        description="Public base URL for Twilio Webhooks (e.g., https://weathergpt-core.vercel.app)"
     )
+
 
     model_config = SettingsConfigDict(
         env_file=".env",
