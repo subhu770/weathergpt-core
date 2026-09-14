@@ -742,7 +742,7 @@
                     <button 
                         type="button" 
                         id="multichannelAlertBtn"
-                        onclick="dispatchMultichannelAlert()" 
+                        onclick="event.preventDefault(); dispatchMultichannelAlert(event);" 
                         class="w-full h-11 bg-gradient-to-r from-red-700 via-amber-600 to-blue-900 hover:from-red-800 hover:to-blue-950 active:scale-95 text-white font-bold text-xs rounded-lg px-4 flex items-center justify-center gap-2 shadow-md transition transform"
                     >
                         <i data-lucide="radio" class="w-4 h-4 text-amber-300 animate-pulse"></i>
@@ -753,7 +753,7 @@
                     <button 
                         type="button" 
                         id="modalIvrCallBtn"
-                        onclick="triggerIvrEmergencyCallFromModal()" 
+                        onclick="event.preventDefault(); triggerIvrEmergencyCallFromModal(event);" 
                         class="w-full h-9 bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white font-semibold text-xs rounded px-3 flex items-center justify-center gap-1.5 transition shadow-sm"
                     >
                         <i data-lucide="phone-outgoing" class="w-3.5 h-3.5 text-amber-300"></i>
@@ -768,7 +768,7 @@
                     </label>
                     <div class="grid grid-cols-1 gap-2.5">
                         <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                            <input type="checkbox" id="channelSms" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
+                            <input type="checkbox" id="channelSms" name="sms-checkbox" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
                             <div class="flex-1">
                                 <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                                     <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-800"></i>
@@ -779,7 +779,7 @@
                         </label>
 
                         <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                            <input type="checkbox" id="channelVoice" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
+                            <input type="checkbox" id="channelVoice" name="ivr-checkbox" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
                             <div class="flex-1">
                                 <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                                     <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-700"></i>
@@ -805,8 +805,9 @@
                 <!-- Action Buttons -->
                 <div class="pt-2 flex flex-col sm:flex-row items-center gap-2">
                     <button 
-                        type="submit" 
+                        type="button" 
                         id="telecomSubmitBtn" 
+                        onclick="event.preventDefault(); submitTelecomSubscription(event);"
                         class="w-full sm:flex-1 h-10 bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs rounded px-4 flex items-center justify-center gap-2 shadow-sm transition"
                     >
                         <i data-lucide="check-circle-2" class="w-4 h-4"></i>
@@ -814,7 +815,7 @@
                     </button>
                     <button 
                         type="button" 
-                        onclick="sendTelecomTestBroadcast()" 
+                        onclick="event.preventDefault(); sendTelecomTestBroadcast(event);" 
                         id="telecomTestBtn" 
                         class="w-full sm:w-auto h-10 bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-300 font-semibold text-xs rounded px-3 flex items-center justify-center gap-1.5 transition"
                     >
@@ -1181,6 +1182,14 @@
         // CITIZEN TELECOM ALERT SUBSCRIPTION (SMS & FEATURE PHONE IVR BROADCAST)
         // =========================================================================
 
+        function getSmsCheckbox() {
+            return document.getElementById("channelSms") || document.getElementById("sms-checkbox") || document.querySelector("input[name='sms-checkbox']");
+        }
+
+        function getIvrCheckbox() {
+            return document.getElementById("channelVoice") || document.getElementById("ivr-checkbox") || document.querySelector("input[name='ivr-checkbox']");
+        }
+
         function updateTelecomButtonUI() {
             const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
             const isSubscribed = localStorage.getItem('weathergpt_telecom_subscribed') === 'true';
@@ -1198,8 +1207,8 @@
             const districtLabel = document.getElementById("telecomModalDistrict");
             const phoneInput = document.getElementById("telecomPhoneInput");
             const langSelect = document.getElementById("telecomLangSelect");
-            const smsCheck = document.getElementById("channelSms");
-            const ivrCheck = document.getElementById("channelVoice");
+            const smsCheck = getSmsCheckbox();
+            const ivrCheck = getIvrCheckbox();
 
             // Update district label from current view
             if (districtLabel) {
@@ -1208,20 +1217,31 @@
 
             // Restore saved values from localStorage or default to +91 77355 29862
             const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
-            if (phoneInput) {
+            if (phoneInput && !phoneInput.value) {
                 phoneInput.value = savedPhone || "7735529862";
             }
             const savedLang = localStorage.getItem('weathergpt_telecom_lang');
             if (savedLang && langSelect) {
                 langSelect.value = savedLang;
             }
+
+            // Preserve checkbox state: default to true unless explicitly unchecked by user
             if (smsCheck) {
-                smsCheck.checked = localStorage.getItem('weathergpt_telecom_sms') === 'true';
+                const savedSms = localStorage.getItem('weathergpt_telecom_sms');
+                if (savedSms !== null) {
+                    smsCheck.checked = savedSms !== 'false';
+                } else if (!smsCheck.hasAttribute('data-user-modified')) {
+                    smsCheck.checked = true;
+                }
             }
             if (ivrCheck) {
-                ivrCheck.checked = localStorage.getItem('weathergpt_telecom_ivr') !== 'false';
+                const savedIvr = localStorage.getItem('weathergpt_telecom_ivr');
+                if (savedIvr !== null) {
+                    ivrCheck.checked = savedIvr !== 'false';
+                } else if (!ivrCheck.hasAttribute('data-user-modified')) {
+                    ivrCheck.checked = true;
+                }
             }
-
 
             if (modal) {
                 modal.classList.remove("hidden");
@@ -1253,7 +1273,26 @@
             }
         });
 
-        async function submitTelecomSubscription() {
+        // Setup persistent change listeners on alert channel checkboxes
+        document.addEventListener("DOMContentLoaded", () => {
+            const smsCheck = getSmsCheckbox();
+            const ivrCheck = getIvrCheckbox();
+            if (smsCheck) {
+                smsCheck.addEventListener("change", (e) => {
+                    smsCheck.setAttribute("data-user-modified", "true");
+                    localStorage.setItem('weathergpt_telecom_sms', e.target.checked ? 'true' : 'false');
+                });
+            }
+            if (ivrCheck) {
+                ivrCheck.addEventListener("change", (e) => {
+                    ivrCheck.setAttribute("data-user-modified", "true");
+                    localStorage.setItem('weathergpt_telecom_ivr', e.target.checked ? 'true' : 'false');
+                });
+            }
+        });
+
+        async function submitTelecomSubscription(e) {
+            if (e && e.preventDefault) e.preventDefault();
             const phoneInput = document.getElementById("telecomPhoneInput");
             if (!phoneInput) return;
 
@@ -1271,32 +1310,35 @@
             }
 
             const formattedPhone = `+91${cleanPhone}`;
-            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
-            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : true;
+            const smsCheck = getSmsCheckbox();
+            const ivrCheck = getIvrCheckbox();
+            const isSmsEnabled = smsCheck ? smsCheck.checked : true;
+            const isIvrEnabled = ivrCheck ? ivrCheck.checked : true;
             const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
             const district = currentLocation || "Khordha";
 
-            // Save preferences
+            // Save preferences without altering current checkbox checked state
             localStorage.setItem('weathergpt_telecom_phone', cleanPhone);
-            localStorage.setItem('weathergpt_telecom_sms', smsCheck.toString());
-            localStorage.setItem('weathergpt_telecom_ivr', ivrCheck.toString());
+            localStorage.setItem('weathergpt_telecom_sms', isSmsEnabled.toString());
+            localStorage.setItem('weathergpt_telecom_ivr', isIvrEnabled.toString());
             localStorage.setItem('weathergpt_telecom_lang', lang);
             localStorage.setItem('weathergpt_telecom_subscribed', 'true');
 
             // Dispatch multichannel alert or single channel based on subscription
-            if (smsCheck && ivrCheck) {
-                await dispatchMultichannelAlert(formattedPhone);
-            } else if (ivrCheck) {
+            if (isSmsEnabled && isIvrEnabled) {
+                await dispatchMultichannelAlert(e, formattedPhone);
+            } else if (isIvrEnabled) {
                 await triggerIvrEmergencyCall(formattedPhone);
-            } else if (smsCheck) {
-                await sendTwilioEmergencySms(formattedPhone);
+            } else if (isSmsEnabled) {
+                await sendTwilioEmergencySms(e, formattedPhone);
             } else {
-                await dispatchMultichannelAlert(formattedPhone);
+                await dispatchMultichannelAlert(e, formattedPhone);
             }
             updateTelecomButtonUI();
         }
 
-        async function sendTelecomTestBroadcast() {
+        async function sendTelecomTestBroadcast(e) {
+            if (e && e.preventDefault) e.preventDefault();
             const phoneInput = document.getElementById("telecomPhoneInput");
             let cleanPhone = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
             if (cleanPhone.length === 12 && cleanPhone.startsWith("91")) {
@@ -1312,24 +1354,38 @@
             }
 
             const formattedPhone = `+91${cleanPhone}`;
-            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
-            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : true;
+            const smsCheck = getSmsCheckbox();
+            const ivrCheck = getIvrCheckbox();
+            const isSmsEnabled = smsCheck ? smsCheck.checked : true;
+            const isIvrEnabled = ivrCheck ? ivrCheck.checked : true;
 
-            if (smsCheck && ivrCheck) {
-                await dispatchMultichannelAlert(formattedPhone);
-            } else if (ivrCheck) {
+            if (isSmsEnabled && isIvrEnabled) {
+                await dispatchMultichannelAlert(e, formattedPhone);
+            } else if (isIvrEnabled) {
                 await triggerIvrEmergencyCall(formattedPhone);
-            } else if (smsCheck) {
-                await sendTwilioEmergencySms(formattedPhone);
+            } else if (isSmsEnabled) {
+                await sendTwilioEmergencySms(e, formattedPhone);
             } else {
-                await dispatchMultichannelAlert(formattedPhone);
+                await dispatchMultichannelAlert(e, formattedPhone);
             }
         }
 
         /**
          * Unified Multichannel Alert Dispatch (Twilio Voice IVR + Twilio SMS + Web Push)
          */
-        async function dispatchMultichannelAlert(targetPhone = null) {
+        async function dispatchMultichannelAlert(arg1 = null, arg2 = null) {
+            let e = null;
+            let targetPhone = null;
+            if (arg1 && typeof arg1 === 'object' && arg1.preventDefault) {
+                e = arg1;
+                targetPhone = arg2;
+            } else if (typeof arg1 === 'string') {
+                targetPhone = arg1;
+            } else if (arg2 && typeof arg2 === 'string') {
+                targetPhone = arg2;
+            }
+            if (e && e.preventDefault) e.preventDefault();
+
             const phoneInput = document.getElementById("telecomPhoneInput");
             let rawPhone = targetPhone;
 
@@ -1524,7 +1580,19 @@
         /**
          * Dispatch Twilio Emergency SMS Notification
          */
-        async function sendTwilioEmergencySms(targetPhone = null) {
+        async function sendTwilioEmergencySms(arg1 = null, arg2 = null) {
+            let e = null;
+            let targetPhone = null;
+            if (arg1 && typeof arg1 === 'object' && arg1.preventDefault) {
+                e = arg1;
+                targetPhone = arg2;
+            } else if (typeof arg1 === 'string') {
+                targetPhone = arg1;
+            } else if (arg2 && typeof arg2 === 'string') {
+                targetPhone = arg2;
+            }
+            if (e && e.preventDefault) e.preventDefault();
+
             const phoneInput = document.getElementById("telecomPhoneInput");
             let rawPhone = targetPhone;
 
@@ -1804,9 +1872,19 @@
             }
         }
 
-        async function triggerIvrEmergencyCallFromModal() {
+        async function triggerIvrEmergencyCallFromModal(arg1 = null, arg2 = null) {
+            let e = null;
+            let customPhone = null;
+            if (arg1 && typeof arg1 === 'object' && arg1.preventDefault) {
+                e = arg1;
+                customPhone = arg2;
+            } else if (typeof arg1 === 'string') {
+                customPhone = arg1;
+            }
+            if (e && e.preventDefault) e.preventDefault();
+
             const phoneInput = document.getElementById("telecomPhoneInput");
-            const phone = (phoneInput && phoneInput.value.trim()) ? phoneInput.value.trim() : "7735529862";
+            const phone = customPhone || ((phoneInput && phoneInput.value.trim()) ? phoneInput.value.trim() : "7735529862");
             await triggerIvrEmergencyCall(phone);
         }
 
