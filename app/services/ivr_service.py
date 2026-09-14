@@ -225,6 +225,26 @@ class TwilioIVRService:
             logger.error(f"Unexpected error sending Twilio SMS: {exc}")
             raise RuntimeError(f"Failed to send Twilio SMS: {str(exc)}")
 
+    async def resolve_district_coords(
+        self,
+        district: Optional[str] = None,
+        lat: Optional[float] = None,
+        lon: Optional[float] = None
+    ) -> Tuple[str, float, float]:
+        """
+        Safely resolve district name and geographic coordinates (lat, lon)
+        with geocoding fallback for accurate localized climate telemetry.
+        """
+        dist_name = (district or "Khordha").strip()
+        if lat is not None and lon is not None:
+            return dist_name, float(lat), float(lon)
+        try:
+            geo = await weather_service.resolve_coordinates(dist_name)
+            return dist_name, float(geo["latitude"]), float(geo["longitude"])
+        except Exception as err:
+            logger.warning(f"Geocoding fallback for district '{dist_name}': {err}")
+            return dist_name, 20.2961, 85.8245
+
     async def generate_welcome_twiml(
         self,
         district: str,
@@ -234,13 +254,13 @@ class TwilioIVRService:
     ) -> str:
         """
         Generate TwiML for POST /api/ivr/welcome:
-        - Speaks immediate dynamic emergency greeting for the detected district (hazard level, wind, rain).
+        - Ingests live weather metrics for the active district (temp, wind, rain, hazard tier).
+        - Speaks Initial Welcome Prompt (before language selection):
+          "Emergency weather bulletin for {district}. Current hazard level is {hazard_level}. Temperature is {temp} degree Celsius, wind speed is {wind_speed} kilometers per hour, with precipitation at {rain} millimeters."
         - Prompts for language selection via DTMF Gather (1 for English, 2 for Hindi).
         - Action URL: /api/ivr/menu
         """
-        dist_name = district or "Khordha"
-        resolved_lat = lat if lat is not None else 20.2961
-        resolved_lon = lon if lon is not None else 85.8245
+        dist_name, resolved_lat, resolved_lon = await self.resolve_district_coords(district, lat, lon)
 
         # Ingest live telemetry with safe fallback
         try:
@@ -259,7 +279,9 @@ class TwilioIVRService:
                 "temperature_c": 28.0,
                 "wind_speed_kmh": 14.0,
                 "precipitation_mm": 0.0,
-                "humidity_percent": 65
+                "humidity_percent": 65,
+                "surface_pressure_hpa": 1010.0,
+                "wind_gusts_kmh": 18.0
             }
             hazard = {
                 "level": "GREEN",
@@ -267,32 +289,27 @@ class TwilioIVRService:
                 "badge_text": "NORMAL"
             }
 
-        hazard_level = hazard["level"]
-        wind_spd = metrics.get("wind_speed_kmh", 12.0)
-        precip = metrics.get("precipitation_mm", 0.0)
-        temp = metrics.get("temperature_c", 28.0)
+        hazard_level = hazard.get("level", "GREEN")
+        wind_spd = round(metrics.get("wind_speed_kmh", 14.0))
+        precip = round(metrics.get("precipitation_mm", 0.0), 1)
+        temp = round(metrics.get("temperature_c", 28.0))
 
         # Build standard TwiML VoiceResponse
         vr = VoiceResponse()
 
-        # 1. Immediate dynamic emergency alert greeting
-        if hazard_level in ["RED", "ORANGE"]:
-            greeting_en = (
-                f"Severe weather emergency alert from India Meteorological Department and NDMA for {dist_name}. "
-                f"Emergency status is {hazard_level} warning. "
-                f"Recorded winds are {wind_spd:.0f} kilometers per hour with {precip:.1f} millimeters of rainfall."
-            )
-        else:
-            greeting_en = (
-                f"Official weather bulletin from India Meteorological Department and NDMA for {dist_name}. "
-                f"Alert level is {hazard_level}. "
-                f"Temperature is {temp:.0f} degrees Celsius with wind speed {wind_spd:.0f} kilometers per hour."
-            )
+        # Initial Welcome Prompt
+        welcome_prompt = (
+            f"Emergency weather bulletin for {dist_name}. "
+            f"Current hazard level is {hazard_level}. "
+            f"Temperature is {temp} degree Celsius, "
+            f"wind speed is {wind_spd} kilometers per hour, "
+            f"with precipitation at {precip} millimeters."
+        )
 
-        vr.say(greeting_en, voice="Polly.Aditi", language="en-IN")
+        vr.say(welcome_prompt, voice="Polly.Aditi", language="en-IN")
         vr.pause(length=1)
 
-        # 2. DTMF Gather for Language Selection (1=English, 2=Hindi)
+        # DTMF Gather for Language Selection (1=English, 2=Hindi)
         clean_base_url = (settings.twilio_webhook_base_url or base_url or "https://weathergpt-core.vercel.app").rstrip("/")
         if "localhost" in clean_base_url or "127.0.0.1" in clean_base_url or not clean_base_url.startswith("http"):
             clean_base_url = "https://weathergpt-core.vercel.app"
@@ -332,16 +349,14 @@ class TwilioIVRService:
         Generate TwiML for POST /api/ivr/menu:
         - Reads Digits (1 = English, 2 = Hindi).
         - Plays the 4-Persona Advisory Menu via DTMF Gather (num_digits=1, timeout=6):
-            * Press 1: Farmer Advisory (agricultural drainage and crop safety guidelines)
-            * Press 2: Fisherman Advisory (marine alert, wind surge, harbor docking order)
-            * Press 3: General District Weather (temperature, humidity, precipitation metrics)
+            * Press 1: Farmer Advisory (agricultural drainage and crop protection steps)
+            * Press 2: Fisherman Advisory (marine wind alert and harbor docking directives)
+            * Press 3: Full Telemetry (humidity, surface pressure, and gust forecast)
             * Press 4: High-Risk Emergency SOS Rescue
         - Action URL: /api/ivr/action
         """
-        lang = "hi" if digits == "2" else "en"
-        dist_name = district or "Khordha"
-        resolved_lat = lat if lat is not None else 20.2961
-        resolved_lon = lon if lon is not None else 85.8245
+        lang = "hi" if str(digits).strip() == "2" else "en"
+        dist_name, resolved_lat, resolved_lon = await self.resolve_district_coords(district, lat, lon)
 
         clean_base_url = (settings.twilio_webhook_base_url or base_url or "https://weathergpt-core.vercel.app").rstrip("/")
         if "localhost" in clean_base_url or "127.0.0.1" in clean_base_url or not clean_base_url.startswith("http"):
@@ -367,18 +382,18 @@ class TwilioIVRService:
         if lang == "hi":
             menu_prompt = (
                 f"{dist_name} मौसम विभाग परामर्श सेवा मेनू। "
-                "कृषि एवं फसल सुरक्षा सलाह के लिए 1 दबाएँ। "
-                "मछुआरों के लिए समुद्री सुरक्षा निर्देश हेतु 2 दबाएँ। "
-                "जिले के मौसम और तापमान की जानकारी के लिए 3 दबाएँ। "
-                "आपातकालीन एन डी आर एफ एस ओ एस बचाव सहायता के लिए 4 दबाएँ।"
+                "किसान कृषि एवं जल निकासी सुरक्षा सलाह के लिए 1 दबाएँ। "
+                "मछुआरों के लिए समुद्री पवन एवं बंदरगाह निर्देश हेतु 2 दबाएँ। "
+                "विस्तृत लाइव टेलीमेट्री एवं मौसम विवरण के लिए 3 दबाएँ। "
+                "आपातकालीन एस ओ एस बचाव सहायता के लिए 4 दबाएँ।"
             )
             gather.say(menu_prompt, voice="Polly.Aditi", language="hi-IN")
         else:
             menu_prompt = (
                 f"WeatherGPT Advisory Menu for {dist_name}. "
-                "Press 1 for Farmer Agricultural Advisory and crop safety guidelines. "
-                "Press 2 for Fisherman Maritime Advisory and wind surge docking orders. "
-                "Press 3 for General District Weather and live telemetry. "
+                "Press 1 for Farmer Agricultural Advisory and crop drainage steps. "
+                "Press 2 for Fisherman Maritime Advisory and harbor docking directives. "
+                "Press 3 for Detailed Live Telemetry read out. "
                 "Press 4 for High Risk Emergency S O S Rescue."
             )
             gather.say(menu_prompt, voice="Polly.Aditi", language="en-IN")
@@ -387,9 +402,9 @@ class TwilioIVRService:
 
         # Fallback if no digit pressed: repeat menu prompt once then default to option 3
         if lang == "hi":
-            vr.say("कोई विकल्प नहीं मिला। जिले का मौसम बुलेटिन सुनाया जा रहा है।", voice="Polly.Aditi", language="hi-IN")
+            vr.say("कोई विकल्प नहीं मिला। विस्तृत लाइव मौसम विवरण सुनाया जा रहा है।", voice="Polly.Aditi", language="hi-IN")
         else:
-            vr.say("No input received. Playing general district weather bulletin.", voice="Polly.Aditi", language="en-IN")
+            vr.say("No input received. Playing detailed live telemetry read out.", voice="Polly.Aditi", language="en-IN")
 
         vr.redirect(f"{action_url}&Digits=3", method="POST")
         return str(vr)
@@ -406,15 +421,14 @@ class TwilioIVRService:
     ) -> str:
         """
         Generate TwiML for POST /api/ivr/action:
-        - Reads Digits and delivers dynamic advisory generated from WeatherGPT backend in selected language.
-        - If Digits == '4', logs emergency SOS event in dashboard state with coordinates and phone,
-          and plays audio confirmation stating emergency rescue teams have been alerted.
-        - Ends with polite signoff and hangs up the call.
+        - Ingests live telemetry & computes localized decision models.
+        - Option 1 (Farmer): Agricultural drainage and crop protection steps based on current rainfall.
+        - Option 2 (Fisherman): Marine wind alert and harbor docking directives based on wind velocity.
+        - Option 3 (Full Telemetry): Detailed live read-out of humidity, surface pressure, and gust forecast.
+        - Option 4 (SOS): Emergency dispatch confirmation with coordinates logged to dashboard.
         """
-        dist_name = district or "Khordha"
-        resolved_lat = lat if lat is not None else 20.2961
-        resolved_lon = lon if lon is not None else 85.8245
-        target_lang = "hi" if lang.lower().startswith("hi") else "en"
+        dist_name, resolved_lat, resolved_lon = await self.resolve_district_coords(district, lat, lon)
+        target_lang = "hi" if str(lang).lower().startswith("hi") else "en"
         selected_digit = str(digits).strip() if digits else "3"
 
         # Ingest live telemetry & evaluate decision models with safe fallbacks
@@ -447,8 +461,11 @@ class TwilioIVRService:
                 "temperature_c": 28.0,
                 "apparent_temperature_c": 29.0,
                 "humidity_percent": 65,
-                "wind_speed_kmh": 12.0,
-                "precipitation_mm": 0.0
+                "wind_speed_kmh": 14.0,
+                "wind_gusts_kmh": 18.0,
+                "precipitation_mm": 0.0,
+                "surface_pressure_hpa": 1010.0,
+                "daily_rain_total_mm": 0.0
             }
             hazard = {"level": "GREEN", "hazard_type": "Normal Weather"}
             agro = {
@@ -466,81 +483,121 @@ class TwilioIVRService:
                 "advisory_hi": "मत्स्य पालन हेतु सुरक्षित स्थिति है।"
             }
 
+        temp_c = round(metrics.get("temperature_c", 28.0))
+        feels_c = round(metrics.get("apparent_temperature_c", 29.0))
+        humidity = int(metrics.get("humidity_percent", 65))
+        wind_k = round(metrics.get("wind_speed_kmh", 14.0))
+        gust_k = round(metrics.get("wind_gusts_kmh", wind_k + 4.0))
+        rain_m = round(metrics.get("precipitation_mm", 0.0), 1)
+        daily_rain = round(metrics.get("daily_rain_total_mm", rain_m), 1)
+        pressure_hpa = round(metrics.get("surface_pressure_hpa", 1010.0))
+        hazard_lvl = hazard.get("level", "GREEN")
+
         vr = VoiceResponse()
 
         # =========================================================================
-        # 1. OPTION 1: FARMER ADVISORY (Agromet & Crop Protection)
+        # 1. OPTION 1: FARMER ADVISORY (Agricultural Drainage & Crop Protection based on current rainfall)
         # =========================================================================
         if selected_digit == "1":
             if target_lang == "hi":
-                speech = (
-                    f"{dist_name} के लिए किसान कृषि परामर्श। "
-                    f"कीटनाशक छिड़काव निर्देश: {agro.get('spraying_desc_hi', '')} "
-                    f"सिंचाई एवं जल निकासी: {agro.get('irrigation_hi', '')} "
-                    f"फसल कटाई निर्देश: {agro.get('harvesting_hi', '')}"
-                )
+                if rain_m > 5.0 or daily_rain > 15.0 or hazard_lvl in ["RED", "ORANGE"]:
+                    speech = (
+                        f"{dist_name} के लिए किसान कृषि एवं फसल सुरक्षा सलाह। "
+                        f"वर्तमान वर्षा {rain_m} मिलीमीटर और कुल वर्षा {daily_rain} मिलीमीटर दर्ज की गई है। "
+                        "फसलों की जड़ों को सड़ने से बचाने के लिए खेतों की जल निकासी नालियां तुरंत साफ करें। "
+                        "अत्यधिक नमी के कारण कीटनाशक छिड़काव स्थगित रखें, और कटी हुई फसलों को तिरपाल से ढककर ऊंचे पक्के स्थानों पर सुरक्षित करें।"
+                    )
+                else:
+                    speech = (
+                        f"{dist_name} के लिए किसान कृषि सलाह। "
+                        f"वर्तमान वर्षा {rain_m} मिलीमीटर और आर्द्रता {humidity} प्रतिशत है। "
+                        f"सिंचाई निर्देश: {agro.get('irrigation_hi', 'सामान्य सिंचाई बनाए रखें।')} "
+                        f"कीटनाशक छिड़काव: {agro.get('spraying_desc_hi', 'मौसम छिड़काव के लिए अनुकूल है।')} "
+                        f"फसल कटाई: {agro.get('harvesting_hi', 'फसल कटाई सुरक्षित रूप से जारी रख सकते हैं।')}"
+                    )
                 vr.say(speech, voice="Polly.Aditi", language="hi-IN")
             else:
-                speech = (
-                    f"Farmer Agricultural Advisory for {dist_name}. "
-                    f"Chemical spraying window: {agro.get('spraying_desc_en', '')} "
-                    f"Irrigation and field drainage: {agro.get('irrigation_en', '')} "
-                    f"Harvest directives: {agro.get('harvesting_en', '')}"
-                )
+                if rain_m > 5.0 or daily_rain > 15.0 or hazard_lvl in ["RED", "ORANGE"]:
+                    speech = (
+                        f"Farmer Agricultural Drainage and Crop Protection Advisory for {dist_name}. "
+                        f"Current rainfall is {rain_m} millimeters with cumulative precipitation at {daily_rain} millimeters. "
+                        "Open all field drainage outlets immediately to prevent waterlogging around crop root zones. "
+                        "Suspend all chemical pesticide spraying due to excessive moisture, and transfer harvested crops to elevated waterproof storage."
+                    )
+                else:
+                    speech = (
+                        f"Farmer Agricultural Advisory for {dist_name}. "
+                        f"Current rainfall is {rain_m} millimeters with humidity at {humidity} percent. "
+                        f"Irrigation guidance: {agro.get('irrigation_en', 'Maintain regular crop irrigation schedule.')} "
+                        f"Spraying window: {agro.get('spraying_desc_en', 'Conditions are favorable for spraying.')} "
+                        f"Harvest directives: {agro.get('harvesting_en', 'Harvesting operations may continue safely.')}"
+                    )
                 vr.say(speech, voice="Polly.Aditi", language="en-IN")
 
         # =========================================================================
-        # 2. OPTION 2: FISHERMAN ADVISORY (Maritime Alert & Port Docking)
+        # 2. OPTION 2: FISHERMAN ADVISORY (Marine Wind Alert & Harbor Docking Directives based on wind velocity)
         # =========================================================================
         elif selected_digit == "2":
             if target_lang == "hi":
-                speech = (
-                    f"{dist_name} तटीय क्षेत्र के लिए मछुआरा सुरक्षा निर्देश। "
-                    f"समुद्र की स्थिति: {marine.get('sea_state_hi', '')} "
-                    f"मार्गदर्शन: {marine.get('advisory_hi', '')}"
-                )
+                if wind_k > 30 or gust_k > 45 or hazard_lvl in ["RED", "ORANGE"]:
+                    speech = (
+                        f"{dist_name} तटीय क्षेत्र के लिए मछुआरा समुद्री चेतावनी। "
+                        f"वर्तमान पवन वेग {wind_k} किलोमीटर प्रति घंटा और तेज झोंके {gust_k} किलोमीटर प्रति घंटा दर्ज किए गए हैं। "
+                        "समुद्र में अशांत लहरों और भारी हवा का गंभीर खतरा है। समुद्र में जाने पर पूर्ण प्रतिबंध है। "
+                        "सभी नावें तुरंत निकटतम सुरक्षित बंदरगाह पर सुरक्षित रूप से डॉक करें और तट से दूर रहें।"
+                    )
+                else:
+                    speech = (
+                        f"{dist_name} के लिए मछुआरा समुद्री निर्देश। "
+                        f"वर्तमान पवन गति {wind_k} किलोमीटर प्रति घंटा है और झोंके {gust_k} किलोमीटर प्रति घंटा हैं। "
+                        f"समुद्र की स्थिति: {marine.get('sea_state_hi', 'समुद्र सामान्य है।')} "
+                        f"निर्देश: {marine.get('advisory_hi', 'तटीय एवं गहरे समुद्र में मछली पकड़ने के लिए सुरक्षित है।')}"
+                    )
                 vr.say(speech, voice="Polly.Aditi", language="hi-IN")
             else:
-                speech = (
-                    f"Maritime and Fishermen Directive for {dist_name}. "
-                    f"Current sea state: {marine.get('sea_state_en', '')} "
-                    f"Maritime advisory: {marine.get('advisory_en', '')}"
-                )
+                if wind_k > 30 or gust_k > 45 or hazard_lvl in ["RED", "ORANGE"]:
+                    speech = (
+                        f"Maritime Wind Alert and Harbor Docking Directive for {dist_name}. "
+                        f"Sustained wind velocity is {wind_k} kilometers per hour with peak gusts up to {gust_k} kilometers per hour. "
+                        "High hazard squally sea conditions detected. Total prohibition on venturing into the sea. "
+                        "All fishing trawlers and country boats must dock at the nearest safe harbor immediately and anchor securely."
+                    )
+                else:
+                    speech = (
+                        f"Maritime and Fishermen Directive for {dist_name}. "
+                        f"Current wind velocity is {wind_k} kilometers per hour with gusts at {gust_k} kilometers per hour. "
+                        f"Sea state: {marine.get('sea_state_en', 'Calm and smooth sea.')} "
+                        f"Directives: {marine.get('advisory_en', 'Conditions are safe for coastal operations.')}"
+                    )
                 vr.say(speech, voice="Polly.Aditi", language="en-IN")
 
         # =========================================================================
-        # 3. OPTION 3: GENERAL DISTRICT WEATHER TELEMETRY
+        # 3. OPTION 3: FULL TELEMETRY READ-OUT (Humidity, Surface Pressure, and Gust Forecast)
         # =========================================================================
         elif selected_digit == "3":
-            temp_c = metrics.get("temperature_c", 28.0)
-            feels_c = metrics.get("apparent_temperature_c", 29.0)
-            humidity = metrics.get("humidity_percent", 65)
-            wind_k = metrics.get("wind_speed_kmh", 12.0)
-            rain_m = metrics.get("precipitation_mm", 0.0)
-            alert_lvl = hazard.get("level", "GREEN")
-
             if target_lang == "hi":
                 speech = (
-                    f"{dist_name} का लाइव मौसम विवरण। "
-                    f"सतही तापमान {temp_c:.1f} डिग्री सेल्सियस है, जो {feels_c:.1f} डिग्री महसूस हो रहा है। "
-                    f"आर्द्रता {humidity} प्रतिशत है। "
-                    f"पवन गति {wind_k:.1f} किलोमीटर प्रति घंटा है। "
-                    f"वर्षा {rain_m:.1f} मिलीमीटर दर्ज की गई है। "
-                    f"आपदा चेतावनी स्तर {alert_lvl} है।"
+                    f"{dist_name} का विस्तृत लाइव मौसम एवं जलवायु टेलीमेट्री विवरण। "
+                    f"सतही तापमान {temp_c} डिग्री सेल्सियस है, जो {feels_c} डिग्री महसूस हो रहा है। "
+                    f"सापेक्ष आर्द्रता {humidity} प्रतिशत है। "
+                    f"सतही वायुमंडलीय दबाव {pressure_hpa} हेक्टोपास्कल दर्ज किया गया है। "
+                    f"पवन गति {wind_k} किलोमीटर प्रति घंटा है, जिसमें अधिकतम झोंके {gust_k} किलोमीटर प्रति घंटा तक अनुमानित हैं। "
+                    f"वर्तमान वर्षा {rain_m} मिलीमीटर और आपदा चेतावनी स्तर {hazard_lvl} है।"
                 )
                 vr.say(speech, voice="Polly.Aditi", language="hi-IN")
             else:
                 speech = (
-                    f"Live Meteorological Telemetry for {dist_name}. "
-                    f"Surface temperature is {temp_c:.1f} degrees Celsius, feels like {feels_c:.1f} degrees. "
+                    f"Detailed Live Climate Telemetry for {dist_name}. "
+                    f"Surface temperature is {temp_c} degrees Celsius, feels like {feels_c} degrees. "
                     f"Relative humidity is {humidity} percent. "
-                    f"Wind speed is {wind_k:.1f} kilometers per hour with {rain_m:.1f} millimeters of rainfall. "
-                    f"IMD Hazard Alert Status is {alert_lvl}."
+                    f"Surface atmospheric pressure is {pressure_hpa} hectopascals. "
+                    f"Sustained wind speed is {wind_k} kilometers per hour with wind gusts forecasted up to {gust_k} kilometers per hour. "
+                    f"Current precipitation is {rain_m} millimeters, and active IMD hazard tier is {hazard_lvl}."
                 )
                 vr.say(speech, voice="Polly.Aditi", language="en-IN")
 
         # =========================================================================
-        # 4. OPTION 4: HIGH-RISK EMERGENCY SOS RESCUE
+        # 4. OPTION 4: HIGH-RISK EMERGENCY SOS RESCUE (Coordinates Logged to Dashboard)
         # =========================================================================
         elif selected_digit == "4":
             caller = caller_phone or settings.twilio_target_phone
@@ -549,7 +606,7 @@ class TwilioIVRService:
                 district=dist_name,
                 lat=resolved_lat,
                 lon=resolved_lon,
-                hazard_level=hazard.get("level", "RED"),
+                hazard_level=hazard_lvl,
                 call_sid=call_sid,
                 language=target_lang
             )
@@ -559,16 +616,16 @@ class TwilioIVRService:
             if target_lang == "hi":
                 speech = (
                     f"आपातकालीन एस ओ एस संदेश प्राप्त हुआ। "
-                    f"{dist_name} में आपके स्थान की जानकारी राष्ट्रीय आपदा प्रबंधन प्राधिकरण (एन डी एम ए) और स्थानीय आपदा राहत दल को तुरंत प्रेषित कर दी गई है। "
-                    f"बचाव दल को आपके पंजीकृत नंबर {caller} पर सतर्क कर दिया गया है और सहायता रवाना कर दी गई है। "
+                    f"{dist_name} में आपके स्थान के निर्देशांक अक्षांश {resolved_lat:.2f} डिग्री उत्तर और देशांतर {resolved_lon:.2f} डिग्री पूर्व आपातकालीन डैशबोर्ड में दर्ज कर लिए गए हैं। "
+                    f"राष्ट्रीय आपदा प्रबंधन प्राधिकरण और स्थानीय राहत दल को आपके पंजीकृत नंबर {caller} पर सहायता हेतु सतर्क कर दिया गया है। "
                     "कृपया तुरंत सुरक्षित पक्के भवन में रहें। सहायता शीघ्र पहुँच रही है।"
                 )
                 vr.say(speech, voice="Polly.Aditi", language="hi-IN")
             else:
                 speech = (
                     f"Emergency S O S received. "
-                    f"Your geographic coordinates in {dist_name} at {resolved_lat:.2f} degrees North, {resolved_lon:.2f} degrees East have been immediately flagged to the National Disaster Management Authority and Local Emergency Rescue Operations. "
-                    f"Emergency rescue teams have been alerted and dispatched to your registered phone number {caller}. "
+                    f"Your geographic coordinates in {dist_name} at {resolved_lat:.2f} degrees North, {resolved_lon:.2f} degrees East have been logged in the emergency dashboard. "
+                    f"National Disaster Management Authority and Local Emergency Rescue Operations have been dispatched to your registered phone number {caller}. "
                     "Please stay inside a secure reinforced shelter. Rescue units are on the way."
                 )
                 vr.say(speech, voice="Polly.Aditi", language="en-IN")
@@ -587,6 +644,7 @@ class TwilioIVRService:
         else:
             vr.say("Thank you for using India Meteorological Department Decision Support System. Stay safe. Goodbye.", voice="Polly.Aditi", language="en-IN")
 
+        vr.pause(length=1)
         vr.hangup()
         return str(vr)
 

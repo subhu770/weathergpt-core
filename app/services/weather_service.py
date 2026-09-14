@@ -421,7 +421,8 @@ class WeatherService:
                 "cloud_cover",
                 "wind_speed_10m",
                 "wind_direction_10m",
-                "wind_gusts_10m"
+                "wind_gusts_10m",
+                "surface_pressure"
             ],
             "daily": [
                 "weather_code",
@@ -460,6 +461,7 @@ class WeatherService:
                     "cloud_cover_percent": int(current.get("cloud_cover", 20)),
                     "is_day": int(current.get("is_day", 1)),
                     "weather_code": int(current.get("weather_code", 0)),
+                    "surface_pressure_hpa": float(current.get("surface_pressure", 1010.0)),
                     "daily_rain_total_mm": daily_rain,
                     "daily_wind_max_kmh": daily_wind_max
                 }
