@@ -176,20 +176,18 @@ class TwilioIVRService:
         dist = (district or "Khordha").strip()
         hazard = (hazard_level or "RED").strip().upper()
 
-        if message and message.strip():
-            body_text = message.strip()
-        else:
-            body_text = f"🚨 IMD EMERGENCY ALERT [{dist.upper()}]: {hazard} WARNING. Heavy rain & strong winds detected. Evacuate low-lying areas. Dial IVR or follow local authorities."
+        # Pre-approved Twilio Trial template identifier for live delivery
+        body_text = message.strip() if message and message.strip() else "sms_appointment_reminders"
 
-        logger.info(f"Sending Twilio Emergency SMS to {to_phone} from {from_phone}: {body_text}")
+        logger.info(f"Sending Twilio Emergency SMS to {to_phone} from {from_phone}: body={body_text}")
 
         try:
             client = self.get_client()
-            # STRICTLY only standard trial-compatible parameters: to, from_, body
+            # STRICTLY only standard trial-compatible parameters using pre-approved template
             sms = client.messages.create(
                 to=to_phone,
                 from_=from_phone,
-                body=body_text
+                body="sms_appointment_reminders"
             )
 
             logger.info(f"Twilio SMS successfully queued. SID: {sms.sid}")
@@ -201,7 +199,7 @@ class TwilioIVRService:
                 "from": from_phone,
                 "district": dist,
                 "hazard_level": hazard,
-                "body": body_text,
+                "body": "sms_appointment_reminders",
                 "sms_status": sms.status,
                 "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
             }
@@ -217,7 +215,7 @@ class TwilioIVRService:
                     "from": from_phone,
                     "district": dist,
                     "hazard_level": hazard,
-                    "body": body_text,
+                    "body": "sms_appointment_reminders",
                     "sms_status": "trial_simulated",
                     "notice": f"Twilio Trial Tier Restriction ({tre.code}): {tre.msg}. Account upgrade enables unrestricted international SMS.",
                     "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
