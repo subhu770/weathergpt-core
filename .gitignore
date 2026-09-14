@@ -7,3 +7,5 @@ env/
 venv/
 .idea/
 .vscode/
+*sos_events_log.json
+
