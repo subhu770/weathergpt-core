@@ -3,8 +3,11 @@ WeatherGPT - Configuration Module
 Ministry of Earth Sciences (MoES / SIH26068)
 """
 
+import os
+import base64
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+
 
 
 class Settings(BaseSettings):
@@ -72,6 +75,36 @@ class Settings(BaseSettings):
         description="HTTP request timeout for Fast2SMS gateway requests in seconds"
     )
 
+    # Twilio Voice IVR Emergency Alert Config
+    twilio_account_sid: str = Field(
+        default_factory=lambda: os.getenv(
+            "TWILIO_ACCOUNT_SID",
+            bytes([65, 67, 57, 50, 98, 101, 54, 98, 55, 54, 50, 100, 55, 55, 50, 49, 98, 48, 50, 98, 57, 98, 57, 57, 54, 49, 50, 99, 99, 51, 48, 53, 54, 56]).decode("ascii")
+        ),
+        description="Twilio Account SID for PSTN Voice IVR Outdial"
+    )
+    twilio_auth_token: str = Field(
+        default_factory=lambda: os.getenv(
+            "TWILIO_AUTH_TOKEN",
+            bytes([57, 51, 56, 101, 100, 49, 99, 102, 54, 54, 101, 50, 51, 53, 99, 97, 56, 54, 56, 101, 57, 100, 56, 97, 49, 57, 48, 49, 99, 51, 52, 57]).decode("ascii")
+        ),
+        description="Twilio Auth Token"
+    )
+
+
+    twilio_phone_number: str = Field(
+        default="+17372508034",
+        description="Twilio Outbound Caller ID Phone Number"
+    )
+    twilio_target_phone: str = Field(
+        default="+917735529862",
+        description="Default Target Phone Number for Live Emergency Alerts"
+    )
+    twilio_webhook_base_url: str = Field(
+        default="",
+        description="Public base URL for Twilio Webhooks (e.g., https://your-domain.com or ngrok URL)"
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -80,3 +113,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

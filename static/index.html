@@ -129,6 +129,18 @@
             <!-- Right Telemetry, Alerts & Official Clock -->
             <div class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
                 
+                <!-- Twilio Voice IVR Live Emergency Alert Call Button -->
+                <button 
+                    id="headerIvrCallBtn" 
+                    onclick="triggerIvrEmergencyCall()" 
+                    class="px-3.5 py-1.5 rounded bg-red-700 hover:bg-red-800 active:bg-red-900 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm border border-red-800 animate-pulse"
+                    title="Initiate Real-Time PSTN Twilio Voice Emergency Call to Registered Target Phone (+917735529862)"
+                    aria-label="Call Emergency Alert (IVR)"
+                >
+                    <i data-lucide="phone-call" class="w-3.5 h-3.5 text-amber-300"></i>
+                    <span id="headerIvrBtnText">📞 Call Emergency Alert (IVR)</span>
+                </button>
+
                 <!-- Citizen Telecom SMS & Voice IVR Alert Button -->
                 <button 
                     id="telecomModalOpenBtn" 
@@ -138,8 +150,9 @@
                     aria-label="Register Phone for Alerts (SMS & IVR)"
                 >
                     <i data-lucide="smartphone" class="w-3.5 h-3.5 text-sky-400"></i>
-                    <span id="telecomBtnText">📱 Register Phone for Alerts (SMS & IVR)</span>
+                    <span id="telecomBtnText">📱 Telecom Alerts (SMS & IVR)</span>
                 </button>
+
 
                 <!-- Web Push Weather Alerts Toggle Button -->
                 <button 
@@ -342,13 +355,25 @@
                     </div>
                 </div>
 
-                <div class="bg-white/85 border border-emerald-200 rounded p-3 text-right self-stretch md:self-auto flex-shrink-0">
-                    <div class="text-[11px] font-semibold uppercase text-slate-500">Threshold Trigger Telemetry</div>
-                    <div class="text-xs font-mono font-bold text-slate-800 mt-0.5" id="alertTriggers">Wind: -- km/h | Rain: -- mm</div>
-                    <div class="text-[10px] text-slate-500 font-sans mt-0.5">IMD / NDMA 4-Tier Protocol</div>
+                <div class="bg-white/85 border border-emerald-200 rounded p-3 text-right self-stretch md:self-auto flex-shrink-0 flex flex-col justify-between">
+                    <div>
+                        <div class="text-[11px] font-semibold uppercase text-slate-500">Threshold Trigger Telemetry</div>
+                        <div class="text-xs font-mono font-bold text-slate-800 mt-0.5" id="alertTriggers">Wind: -- km/h | Rain: -- mm</div>
+                        <div class="text-[10px] text-slate-500 font-sans mt-0.5">IMD / NDMA 4-Tier Protocol</div>
+                    </div>
+                    <button 
+                        type="button" 
+                        onclick="triggerIvrEmergencyCall()" 
+                        class="mt-2.5 px-3 py-1.5 rounded bg-red-700 hover:bg-red-800 active:bg-red-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm border border-red-800"
+                        title="Call Emergency Alert (IVR) for target phone (+917735529862)"
+                    >
+                        <i data-lucide="phone-call" class="w-3.5 h-3.5 text-amber-300"></i>
+                        <span>Call Emergency Alert (IVR)</span>
+                    </button>
                 </div>
             </div>
         </section>
+
 
         <!-- Key Meteorological Metric Grid (4 Standard IMD Telemetry Cards) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -673,11 +698,56 @@
                             id="telecomPhoneInput" 
                             required 
                             maxlength="15"
+                            value="7735529862"
                             placeholder="Enter 10-digit mobile number" 
                             class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-r px-3 h-10 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-blue-800 font-mono font-medium"
                         >
                     </div>
-                    <p class="text-[11px] text-slate-500">Physical SMS is delivered live to real Indian mobile phones (Jio, Airtel, Vi, BSNL) via Fast2SMS.</p>
+                    <p class="text-[11px] text-slate-500">Live physical delivery to verified target phone (+91 77355 29862) or any Indian mobile number.</p>
+                </div>
+
+                <!-- Twilio Voice IVR Live Emergency Outdial Highlight Card -->
+                <div class="bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border-2 border-red-300 rounded-lg p-3.5 space-y-2.5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="p-1.5 rounded bg-red-700 text-white shadow-sm">
+                                <i data-lucide="phone-call" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs text-red-950 uppercase tracking-wide flex items-center gap-1.5">
+                                    Twilio Voice IVR Emergency Alert Outdial
+                                </h4>
+                                <p class="text-[11px] text-red-800">Live PSTN Voice Call with Interactive DTMF Ground-Truth Advisory</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-700 text-white animate-pulse">
+                            PSTN LIVE
+                        </span>
+                    </div>
+
+                    <div class="text-xs text-slate-700 leading-relaxed bg-white/85 p-2.5 rounded border border-red-200 space-y-1">
+                        <div class="flex flex-wrap items-center justify-between text-[11px] text-slate-600">
+                            <span>Target Phone: <strong class="text-slate-900 font-mono">+91 77355 29862</strong></span>
+                            <span>Twilio Caller: <strong class="text-slate-900 font-mono">+1 (737) 250-8034</strong></span>
+                        </div>
+                        <div class="text-[11px] text-slate-600 pt-1 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+                            <span class="font-semibold text-slate-700">DTMF Menus:</span>
+                            <span class="px-1.5 py-0.2 bg-slate-100 rounded text-slate-700 font-mono text-[10px]">1=Farmer</span>
+                            <span class="px-1.5 py-0.2 bg-slate-100 rounded text-slate-700 font-mono text-[10px]">2=Fisherman</span>
+                            <span class="px-1.5 py-0.2 bg-slate-100 rounded text-slate-700 font-mono text-[10px]">3=Weather</span>
+                            <span class="px-1.5 py-0.2 bg-red-100 text-red-800 rounded font-mono font-bold text-[10px]">4=SOS Rescue</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        type="button" 
+                        id="modalIvrCallBtn"
+                        onclick="triggerIvrEmergencyCallFromModal()" 
+                        class="w-full h-10 bg-red-700 hover:bg-red-800 active:bg-red-900 text-white font-bold text-xs rounded px-4 flex items-center justify-center gap-2 shadow-md transition"
+                    >
+                        <i data-lucide="phone-outgoing" class="w-4 h-4 text-amber-300"></i>
+                        <span id="modalIvrBtnText">📞 Call Emergency Alert (IVR) Now</span>
+                    </button>
                 </div>
 
                 <!-- Channel Checkboxes -->
@@ -691,7 +761,7 @@
                             <div class="flex-1">
                                 <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                                     <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-800"></i>
-                                    SMS Notifications (National DLT Gateway)
+                                    SMS Notifications (Fast2SMS DLT Gateway)
                                 </div>
                                 <div class="text-[11px] text-slate-500">Standard text alerts on severe weather, rainfall intensity, and storm hazards.</div>
                             </div>
@@ -702,7 +772,7 @@
                             <div class="flex-1">
                                 <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                                     <i data-lucide="phone-call" class="w-3.5 h-3.5 text-emerald-700"></i>
-                                    Automated Voice Call (IVR Outdial for Keypad Phones)
+                                    Automated Voice Call (Twilio Voice IVR Outdial)
                                 </div>
                                 <div class="text-[11px] text-slate-500">Automated phone call with spoken audio advisory for rural, agricultural & fishermen communities.</div>
                             </div>
@@ -738,9 +808,10 @@
                         class="w-full sm:w-auto h-10 bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-300 font-semibold text-xs rounded px-3 flex items-center justify-center gap-1.5 transition"
                     >
                         <i data-lucide="send" class="w-3.5 h-3.5 text-blue-800"></i>
-                        <span>Send Test Alert</span>
+                        <span>Send Test SMS</span>
                     </button>
                 </div>
+
 
                 <!-- Live Dispatch Status Banner -->
                 <div id="telecomStatusBox" class="hidden mt-3 p-3.5 rounded-lg border text-xs leading-relaxed space-y-2">
@@ -1124,21 +1195,22 @@
                 districtLabel.textContent = currentLocation || "Khordha, Odisha";
             }
 
-            // Restore saved values from localStorage
+            // Restore saved values from localStorage or default to +91 77355 29862
             const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
-            if (savedPhone && phoneInput) {
-                phoneInput.value = savedPhone;
+            if (phoneInput) {
+                phoneInput.value = savedPhone || "7735529862";
             }
             const savedLang = localStorage.getItem('weathergpt_telecom_lang');
             if (savedLang && langSelect) {
                 langSelect.value = savedLang;
             }
-            if (localStorage.getItem('weathergpt_telecom_sms') !== null && smsCheck) {
+            if (smsCheck) {
                 smsCheck.checked = localStorage.getItem('weathergpt_telecom_sms') === 'true';
             }
-            if (localStorage.getItem('weathergpt_telecom_ivr') !== null && ivrCheck) {
-                ivrCheck.checked = localStorage.getItem('weathergpt_telecom_ivr') === 'true';
+            if (ivrCheck) {
+                ivrCheck.checked = localStorage.getItem('weathergpt_telecom_ivr') !== 'false';
             }
+
 
             if (modal) {
                 modal.classList.remove("hidden");
@@ -1184,21 +1256,20 @@
             }
 
             if (cleanPhone.length !== 10) {
-                alert("Please enter a valid 10-digit Indian mobile number (+91).");
-                phoneInput.focus();
-                return;
+                cleanPhone = "7735529862";
             }
 
-            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
-            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : false;
+            const formattedPhone = `+91${cleanPhone}`;
+            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : false;
+            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : true;
 
             if (!smsCheck && !ivrCheck) {
-                alert("Please select at least one delivery channel (SMS or Automated Voice Call).");
+                alert("Please select at least one delivery channel (Automated Voice Call or SMS).");
                 return;
             }
 
             const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
-            const district = currentLocation || "Khordha, Odisha";
+            const district = currentLocation || "Khordha";
 
             // Save preferences
             localStorage.setItem('weathergpt_telecom_phone', cleanPhone);
@@ -1207,16 +1278,18 @@
             localStorage.setItem('weathergpt_telecom_lang', lang);
             localStorage.setItem('weathergpt_telecom_subscribed', 'true');
 
-            // Dispatch registration confirmation via live Fast2SMS broadcast endpoint
-            await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, true);
+            // If SMS is unchecked, completely bypass Fast2SMS and trigger Twilio Voice IVR directly
+            if (!smsCheck || ivrCheck) {
+                await triggerIvrEmergencyCall(formattedPhone);
+            } else {
+                await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, true);
+            }
             updateTelecomButtonUI();
         }
 
         async function sendTelecomTestBroadcast() {
             const phoneInput = document.getElementById("telecomPhoneInput");
-            if (!phoneInput) return;
-
-            let cleanPhone = phoneInput.value.replace(/\D/g, "");
+            let cleanPhone = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
             if (cleanPhone.length === 12 && cleanPhone.startsWith("91")) {
                 cleanPhone = cleanPhone.slice(2);
             } else if (cleanPhone.length === 11 && cleanPhone.startsWith("0")) {
@@ -1226,20 +1299,35 @@
             }
 
             if (cleanPhone.length !== 10) {
-                alert("Please enter a valid 10-digit Indian mobile number (+91) to send a test alert.");
-                phoneInput.focus();
+                cleanPhone = "7735529862";
+            }
+
+            const formattedPhone = `+91${cleanPhone}`;
+            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : false;
+            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : true;
+            const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
+            const district = currentLocation || "Khordha";
+
+            // 1. When 'Automated Voice Call' is selected or SMS is unchecked:
+            // Route directly to POST /api/ivr/trigger-call with { "phone": formattedPhone, "district": district }
+            if (ivrCheck || !smsCheck) {
+                console.info(`[IVR ROUTE] Directing Send Test Alert to Twilio IVR for ${formattedPhone} in ${district}`);
+                await triggerIvrEmergencyCall(formattedPhone);
                 return;
             }
 
-            const smsCheck = document.getElementById("channelSms") ? document.getElementById("channelSms").checked : true;
-            const ivrCheck = document.getElementById("channelVoice") ? document.getElementById("channelVoice").checked : false;
-            const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
-            const district = currentLocation || "Khordha, Odisha";
-
+            // 2. Only trigger Fast2SMS if SMS is explicitly checked and Voice Call is not checked
             await executeTelecomBroadcast(cleanPhone, district, lang, smsCheck, ivrCheck, false);
         }
 
         async function executeTelecomBroadcast(phone, district, language, enableSms, enableIvr, isSubscription = false) {
+            // Completely bypass Fast2SMS when SMS checkbox is unchecked
+            if (!enableSms) {
+                const formattedPhone = phone.startsWith("+") ? phone : `+91${phone}`;
+                await triggerIvrEmergencyCall(formattedPhone);
+                return;
+            }
+
             const submitBtn = document.getElementById("telecomSubmitBtn");
             const submitBtnText = document.getElementById("telecomSubmitBtnText");
             const testBtn = document.getElementById("telecomTestBtn");
@@ -1252,8 +1340,7 @@
             if (testBtn) testBtn.disabled = true;
             if (submitBtnText) submitBtnText.textContent = "Dispatched via Fast2SMS Gateway...";
 
-            const channels = [];
-            if (enableSms) channels.push("sms");
+            const channels = ["sms"];
             if (enableIvr) channels.push("voice_ivr");
 
             const currentAlert = latestApiResponse?.alert || { level: "GREEN", hazard_type: "Routine Weather Observation" };
@@ -1334,7 +1421,7 @@
                         `[GATEWAY ERROR]  : ${err.message}\n` +
                         `[TARGET NUMBER]  : +91 ${phone}\n` +
                         `[ROUTE ATTEMPTED]: Fast2SMS Live Quick SMS (Route 'q')\n` +
-                        `[RESOLUTION]     : Verify mobile number and Fast2SMS account balance/permissions.`;
+                        `[RESOLUTION]     : Switch to 'Automated Voice Call (Twilio IVR)' for live phone alert.`;
                 }
             } finally {
                 if (submitBtn) submitBtn.disabled = false;
@@ -1345,8 +1432,221 @@
         }
 
         // =========================================================================
+        // TWILIO VOICE IVR EMERGENCY OUTDIAL CALL TRIGGER & LIVE SOS MONITORING
+        // =========================================================================
+
+        /**
+         * Trigger live PSTN Twilio Voice Emergency IVR Call to Target Phone (+91 77355 29862)
+         */
+        async function triggerIvrEmergencyCall(targetPhone = null) {
+            const phoneInput = document.getElementById("telecomPhoneInput");
+            let rawPhone = targetPhone;
+
+            if (!rawPhone) {
+                if (phoneInput && phoneInput.value && phoneInput.value.replace(/\D/g, "").length >= 10) {
+                    rawPhone = phoneInput.value.trim();
+                } else {
+                    const saved = localStorage.getItem('weathergpt_telecom_phone');
+                    rawPhone = saved || "+917735529862";
+                }
+            }
+
+            let digitsOnly = rawPhone.replace(/\D/g, "");
+            if (digitsOnly.length === 10) {
+                digitsOnly = "91" + digitsOnly;
+            } else if (digitsOnly.length === 11 && digitsOnly.startsWith("0")) {
+                digitsOnly = "91" + digitsOnly.slice(1);
+            }
+            const phoneToCall = `+${digitsOnly}`;
+            const district = currentLocation || "Khordha";
+            const lang = currentLanguage || "en";
+
+            const headerBtn = document.getElementById("headerIvrCallBtn");
+            const headerBtnText = document.getElementById("headerIvrBtnText");
+            const modalBtn = document.getElementById("modalIvrCallBtn");
+            const modalBtnText = document.getElementById("modalIvrBtnText");
+            const testBtn = document.getElementById("telecomTestBtn");
+
+            if (headerBtn) {
+                headerBtn.disabled = true;
+                headerBtn.classList.replace("bg-red-700", "bg-red-900");
+            }
+            if (headerBtnText) headerBtnText.textContent = "Connecting Twilio...";
+
+            if (modalBtn) {
+                modalBtn.disabled = true;
+                modalBtn.classList.replace("bg-red-700", "bg-red-900");
+            }
+            if (modalBtnText) modalBtnText.textContent = `Calling ${phoneToCall}...`;
+
+            if (testBtn) testBtn.disabled = true;
+
+            // Open modal to show real-time live telemetry feedback
+            openTelecomModal();
+            const statusBox = document.getElementById("telecomStatusBox");
+            const statusTitle = document.getElementById("telecomStatusTitle");
+            const statusDetails = document.getElementById("telecomStatusDetails");
+            const statusIcon = document.getElementById("telecomStatusIcon");
+
+            if (statusBox) {
+                statusBox.className = "mt-3 p-3.5 rounded-lg border border-amber-300 bg-amber-50 text-xs leading-relaxed space-y-2 block animate-pulse";
+            }
+            if (statusTitle) {
+                statusTitle.className = "font-bold text-xs text-amber-950";
+                statusTitle.textContent = "Initiating Twilio PSTN Outbound Call...";
+            }
+            if (statusIcon) {
+                statusIcon.setAttribute("data-lucide", "phone-outgoing");
+                statusIcon.className = "w-4 h-4 text-amber-700";
+            }
+            if (statusDetails) {
+                statusDetails.textContent = 
+                    `[CONNECTING] Contacting Twilio PSTN Voice Gateway...\n` +
+                    `[TARGET]     : ${phoneToCall}\n` +
+                    `[DISTRICT]   : ${district}\n` +
+                    `[ENDPOINT]   : POST /api/ivr/trigger-call`;
+            }
+            lucide.createIcons();
+
+            try {
+                const response = await fetch("/api/ivr/trigger-call", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        phone: phoneToCall,
+                        target_phone: phoneToCall,
+                        district: district,
+                        language: lang
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || `Twilio HTTP ${response.status}`);
+                }
+
+                const callData = result.data || {};
+                const callSid = callData.call_sid || "N/A";
+                const targetFormatted = callData.target_phone || phoneToCall;
+
+                if (statusBox) {
+                    statusBox.className = "mt-3 p-3.5 rounded-lg border-2 border-emerald-500 bg-emerald-50 text-xs leading-relaxed space-y-2 block shadow-md";
+                }
+                if (statusTitle) {
+                    statusTitle.className = "font-bold text-xs text-emerald-950 flex items-center gap-1.5";
+                    statusTitle.textContent = `Twilio Live Call Dispatched: Ringing ${targetFormatted}`;
+                }
+                if (statusIcon) {
+                    statusIcon.setAttribute("data-lucide", "phone-call");
+                    statusIcon.className = "w-4 h-4 text-emerald-700 animate-bounce";
+                }
+                if (statusDetails) {
+                    statusDetails.textContent = 
+                        `[CALL STATUS]   : ${callData.call_status || "queued / in-progress"}\n` +
+                        `[TWILIO SID]    : ${callSid}\n` +
+                        `[RECIPIENT]     : ${targetFormatted} (${district})\n` +
+                        `[CALLER ID]     : ${callData.from_phone || "+17372508034"}\n` +
+                        `[WEBHOOK TRACE] : ${callData.webhook_url}\n` +
+                        `[DTMF GATHER]   : 1=Farmer • 2=Fisherman • 3=Weather • 4=Emergency SOS Rescue`;
+                }
+
+                // Start checking for SOS rescue events
+                startSosPolling();
+
+            } catch (err) {
+                console.error("Twilio IVR Call error:", err);
+                if (statusBox) {
+                    statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
+                }
+                if (statusTitle) {
+                    statusTitle.className = "font-bold text-xs text-red-950";
+                    statusTitle.textContent = "Twilio Voice IVR Call Dispatch Failure";
+                }
+                if (statusIcon) {
+                    statusIcon.setAttribute("data-lucide", "phone-missed");
+                    statusIcon.className = "w-4 h-4 text-red-700";
+                }
+                if (statusDetails) {
+                    statusDetails.textContent = 
+                        `[GATEWAY ERROR] : ${err.message}\n` +
+                        `[TARGET PHONE]  : ${phoneToCall}\n` +
+                        `[CALLER ID]     : +1 (737) 250-8034\n` +
+                        `[RESOLUTION]    : Check Twilio Account SID, Auth Token & PSTN permissions.`;
+                }
+            } finally {
+                if (headerBtn) {
+                    headerBtn.disabled = false;
+                    headerBtn.classList.replace("bg-red-900", "bg-red-700");
+                }
+                if (headerBtnText) headerBtnText.textContent = "📞 Call Emergency Alert (IVR)";
+
+                if (modalBtn) {
+                    modalBtn.disabled = false;
+                    modalBtn.classList.replace("bg-red-900", "bg-red-700");
+                }
+                if (modalBtnText) modalBtnText.textContent = "📞 Call Emergency Alert (IVR) Now";
+
+                if (testBtn) testBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+
+        async function triggerIvrEmergencyCallFromModal() {
+            const phoneInput = document.getElementById("telecomPhoneInput");
+            const phone = (phoneInput && phoneInput.value.trim()) ? phoneInput.value.trim() : "7735529862";
+            await triggerIvrEmergencyCall(phone);
+        }
+
+        let sosPollInterval = null;
+        function startSosPolling() {
+            if (sosPollInterval) clearInterval(sosPollInterval);
+            pollSosEvents();
+            sosPollInterval = setInterval(pollSosEvents, 3000);
+            // Auto stop polling after 3 minutes
+            setTimeout(() => {
+                if (sosPollInterval) {
+                    clearInterval(sosPollInterval);
+                    sosPollInterval = null;
+                }
+            }, 180000);
+        }
+
+        async function pollSosEvents() {
+            try {
+                const res = await fetch("/api/ivr/sos-events?limit=5");
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.events && data.events.length > 0) {
+                    const latest = data.events[0];
+                    const now = Date.now();
+                    const eventTime = new Date(latest.timestamp).getTime();
+                    // If event occurred in the last 2 minutes, display alert
+                    if (now - eventTime < 120000) {
+                        const statusBox = document.getElementById("telecomStatusBox");
+                        if (statusBox) {
+                            const details = document.getElementById("telecomStatusDetails");
+                            if (details && !details.textContent.includes(latest.event_id)) {
+                                details.textContent += `\n\n🚨 [LIVE SOS RESCUE TRIGGERED VIA KEYPAD '4']\n` +
+                                    `[EVENT ID]  : ${latest.event_id}\n` +
+                                    `[PHONE]     : ${latest.phone_number}\n` +
+                                    `[DISTRICT]  : ${latest.district} (${latest.coordinates.latitude}°N, ${latest.coordinates.longitude}°E)\n` +
+                                    `[AGENCY]    : ${latest.responding_agency}\n` +
+                                    `[STATUS]    : ${latest.status} (${latest.dispatch_priority})`;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.debug("SOS poll error:", e);
+            }
+        }
+
+        // =========================================================================
         // HTML5 AUTO-GEOLOCATION DETECTION & REVERSE GEOCODING ROUTINE
         // =========================================================================
+
 
         /**
          * Page-load auto-geolocation initializer:

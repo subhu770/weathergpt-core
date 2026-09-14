@@ -13,7 +13,7 @@ import datetime
 import logging
 from typing import Optional, Dict, Any, List
 import httpx
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, status, Request, Response, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -24,6 +24,8 @@ from app.services.weather_service import weather_service, LocationNotFoundError
 from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory
 from app.services.synthesizer import synthesize_bulletin
 from app.services.bhashini_service import bhashini_service
+from app.services.ivr_service import ivr_service
+
 
 # Logging Setup
 logging.basicConfig(
@@ -82,6 +84,19 @@ class TelecomBroadcastPayload(BaseModel):
     wind_speed_kmh: Optional[float] = Field(default=12.0, description="Wind velocity in km/h")
     channels: List[str] = Field(default=["sms", "voice_ivr"], description="Broadcast channels: ['sms', 'voice_ivr']")
     language: str = Field(default="en", description="Advisory language: 'en', 'hi'")
+
+
+class IVRTriggerPayload(BaseModel):
+    """Schema for triggering an outbound PSTN IVR emergency call via Twilio."""
+    target_phone: Optional[str] = Field(default=None, description="Recipient phone number (e.g. +917735529862)")
+    phone: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
+    phone_number: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
+    district: Optional[str] = Field(default="Khordha", description="Target administrative Indian district")
+    latitude: Optional[float] = Field(default=None, description="Direct geographic latitude")
+    longitude: Optional[float] = Field(default=None, description="Direct geographic longitude")
+    language: Optional[str] = Field(default="en", description="Default initial language ('en', 'hi')")
+
+
 
 
 @app.post("/api/telecom/broadcast")
@@ -237,8 +252,191 @@ async def broadcast_telecom_alert_endpoint(payload: TelecomBroadcastPayload):
     }
 
 
+def resolve_request_base_url(request: Request) -> str:
+    """Resolve public URL for Twilio webhook callback."""
+    if settings.twilio_webhook_base_url:
+        return settings.twilio_webhook_base_url.rstrip("/")
+    forwarded_proto = request.headers.get("x-forwarded-proto")
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+    return str(request.base_url).rstrip("/")
+
+
+async def get_ivr_param(request: Request, key: str, default: Optional[str] = None) -> Optional[str]:
+    """Safely extract parameter from query string or form data."""
+    if key in request.query_params:
+        return request.query_params.get(key)
+    if request.method == "POST":
+        try:
+            form = await request.form()
+            if key in form:
+                return str(form.get(key))
+        except Exception:
+            pass
+    return default
+
+
+# =============================================================================
+# TWILIO VOICE IVR EMERGENCY ALERT ENDPOINTS
+# =============================================================================
+
+@app.post("/api/ivr/trigger-call")
+async def trigger_ivr_call_endpoint(payload: IVRTriggerPayload, request: Request):
+    """
+    1. POST /api/ivr/trigger-call:
+       - Initiates an outbound PSTN emergency alert call using Twilio Client to TARGET_PHONE.
+       - Points Twilio webhook URL to /api/ivr/welcome passing the selected/detected district telemetry.
+    """
+    base_url = resolve_request_base_url(request)
+    phone_to_call = payload.target_phone or payload.phone or payload.phone_number or settings.twilio_target_phone
+    try:
+        call_result = await ivr_service.trigger_outbound_call(
+            target_phone=phone_to_call,
+            district=payload.district,
+            base_url=base_url,
+            lat=payload.latitude,
+            lon=payload.longitude,
+            language=payload.language or "en"
+        )
+
+        return {
+            "status": "success",
+            "message": f"Twilio emergency IVR call initiated to {call_result['target_phone']}",
+            "data": call_result
+        }
+    except Exception as exc:
+        logger.error(f"Failed to trigger Twilio IVR call: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Twilio Voice Call Error: {str(exc)}"
+        )
+
+
+@app.api_route("/api/ivr/welcome", methods=["GET", "POST"])
+async def ivr_welcome_endpoint(
+    request: Request,
+    district: Optional[str] = Query(None),
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None)
+):
+    """
+    2. POST & GET /api/ivr/welcome:
+       - Responds with TwiML (VoiceResponse).
+       - Speaks an immediate dynamic emergency greeting for the detected district
+         (current hazard level, wind speed, precipitation from our WeatherGPT telemetry service).
+       - Prompts for language selection via DTMF Gather (num_digits=1, timeout=5):
+         * Press 1 for English
+         * Press 2 for Hindi (hi-IN)
+       - Action URL: /api/ivr/menu
+    """
+    dist_name = district or await get_ivr_param(request, "district", "Khordha")
+    raw_lat = lat or await get_ivr_param(request, "lat", None)
+    raw_lon = lon or await get_ivr_param(request, "lon", None)
+
+    parsed_lat = float(raw_lat) if raw_lat is not None else None
+    parsed_lon = float(raw_lon) if raw_lon is not None else None
+    base_url = resolve_request_base_url(request)
+
+    twiml_xml = await ivr_service.generate_welcome_twiml(
+        district=dist_name,
+        lat=parsed_lat,
+        lon=parsed_lon,
+        base_url=base_url
+    )
+    return Response(content=twiml_xml, media_type="application/xml")
+
+
+@app.api_route("/api/ivr/menu", methods=["GET", "POST"])
+async def ivr_menu_endpoint(
+    request: Request,
+    district: Optional[str] = Query(None),
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None)
+):
+    """
+    3. POST & GET /api/ivr/menu:
+       - Reads Digits (1 = English, 2 = Hindi).
+       - Plays the Persona Advisory Menu via DTMF Gather (num_digits=1, timeout=6):
+         * Press 1: Farmer Advisory (agricultural drainage and crop safety guidelines)
+         * Press 2: Fisherman Advisory (marine alert, wind surge, harbor docking order)
+         * Press 3: General District Weather (temperature, humidity, precipitation metrics from telemetry)
+         * Press 4: High-Risk Emergency SOS Rescue
+       - Action URL: /api/ivr/action
+    """
+    digits = await get_ivr_param(request, "Digits", "1")
+    dist_name = district or await get_ivr_param(request, "district", "Khordha")
+    raw_lat = lat or await get_ivr_param(request, "lat", None)
+    raw_lon = lon or await get_ivr_param(request, "lon", None)
+
+    parsed_lat = float(raw_lat) if raw_lat is not None else None
+    parsed_lon = float(raw_lon) if raw_lon is not None else None
+    base_url = resolve_request_base_url(request)
+
+    twiml_xml = await ivr_service.generate_menu_twiml(
+        digits=digits,
+        district=dist_name,
+        lat=parsed_lat,
+        lon=parsed_lon,
+        base_url=base_url
+    )
+    return Response(content=twiml_xml, media_type="application/xml")
+
+
+@app.api_route("/api/ivr/action", methods=["GET", "POST"])
+async def ivr_action_endpoint(
+    request: Request,
+    district: Optional[str] = Query(None),
+    lang: Optional[str] = Query(None),
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None)
+):
+    """
+    4. POST & GET /api/ivr/action:
+       - Reads Digits and delivers dynamic advisory generated from WeatherGPT backend in the selected language.
+       - If Digits == '4', log an emergency SOS event in the dashboard database/state with coordinates and phone number,
+         and play an audio confirmation stating emergency rescue teams have been alerted.
+       - End with a polite signoff and hang up the call.
+    """
+    digits = await get_ivr_param(request, "Digits", "3")
+    target_lang = lang or await get_ivr_param(request, "lang", "en")
+    dist_name = district or await get_ivr_param(request, "district", "Khordha")
+    raw_lat = lat or await get_ivr_param(request, "lat", None)
+    raw_lon = lon or await get_ivr_param(request, "lon", None)
+    caller_phone = await get_ivr_param(request, "From", settings.twilio_target_phone)
+    call_sid = await get_ivr_param(request, "CallSid", "")
+
+    parsed_lat = float(raw_lat) if raw_lat is not None else None
+    parsed_lon = float(raw_lon) if raw_lon is not None else None
+
+    twiml_xml = await ivr_service.generate_action_twiml(
+        digits=digits,
+        lang=target_lang,
+        district=dist_name,
+        lat=parsed_lat,
+        lon=parsed_lon,
+        caller_phone=caller_phone,
+        call_sid=call_sid
+    )
+    return Response(content=twiml_xml, media_type="application/xml")
+
+
+@app.get("/api/ivr/sos-events")
+async def get_sos_events_endpoint(limit: int = Query(20, ge=1, le=100)):
+    """
+    Retrieve logged Emergency SOS Rescue events triggered via IVR DTMF option 4.
+    """
+    events = ivr_service.get_sos_events(limit=limit)
+    return {
+        "status": "success",
+        "count": len(events),
+        "events": events
+    }
+
+
 @app.post("/api/voice/tts")
 async def synthesize_speech_endpoint(payload: TTSRequestPayload):
+
     """
     Bhashini Multilingual Text-to-Speech (TTS) Endpoint:
     Synthesizes meteorological advisory scripts into Indic speech audio via Government of India Bhashini Dhruva Pipeline.
