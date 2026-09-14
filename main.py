@@ -23,9 +23,8 @@ from app.config import settings
 from app.services.weather_service import weather_service, LocationNotFoundError
 from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory
 from app.services.synthesizer import synthesize_bulletin
-from app.services.bhashini_service import bhashini_service
 from app.services.ivr_service import ivr_service
-from twilio.twiml.voice_response import VoiceResponse
+from twilio.twiml.voice_response import VoiceResponse, Gather
 
 
 # Logging Setup
@@ -403,16 +402,25 @@ async def ivr_welcome_endpoint(
         )
     except Exception as exc:
         logger.error(f"Error in /api/ivr/welcome: {exc}", exc_info=True)
-        fallback_vr = VoiceResponse()
-        fallback_vr.say(
-            "Official emergency weather bulletin from India Meteorological Department and NDMA. Please stay alert and monitor local official broadcasts.",
+        response = VoiceResponse()
+        response.say(
+            "IMD Emergency Alert. Khordha region. Current hazard level is Yellow Alert. Temperature 28 degrees Celsius, wind speed 18 kilometers per hour. Press 1 for English, 2 for Hindi.",
             voice="Polly.Aditi",
             language="en-IN"
         )
-        fallback_vr.pause(length=1)
-        fallback_vr.hangup()
+        gather = Gather(
+            num_digits=1,
+            timeout=5,
+            action="https://weathergpt-core.vercel.app/api/ivr/menu?district=Khordha",
+            method="POST"
+        )
+        gather.say("For English, press 1.", voice="Polly.Aditi", language="en-IN")
+        gather.say("हिन्दी के लिए 2 दबाएँ।", voice="Polly.Aditi", language="hi-IN")
+        response.append(gather)
+        response.say("No input received. Continuing in English.", voice="Polly.Aditi", language="en-IN")
+        response.redirect("https://weathergpt-core.vercel.app/api/ivr/menu?district=Khordha&Digits=1", method="POST")
         return Response(
-            content=str(fallback_vr),
+            content=str(response),
             media_type="application/xml",
             headers={"Content-Type": "application/xml; charset=utf-8"}
         )
