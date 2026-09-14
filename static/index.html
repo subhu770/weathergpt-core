@@ -767,12 +767,22 @@
                         Alert Delivery Channels <span class="text-red-500">*</span>
                     </label>
                     <div class="grid grid-cols-1 gap-2.5">
-                        <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition">
-                            <input type="checkbox" id="channelSms" name="sms-checkbox" checked class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300">
+                        <label class="flex items-start space-x-3 p-2.5 rounded-lg border border-slate-200 bg-slate-50 select-none">
+                            <input 
+                                type="checkbox" 
+                                id="channelSms" 
+                                name="sms-checkbox" 
+                                checked 
+                                disabled 
+                                onclick="return false;" 
+                                style="pointer-events: none; opacity: 1;" 
+                                class="mt-0.5 h-4 w-4 rounded text-blue-900 focus:ring-blue-800 border-slate-300 cursor-default"
+                            >
                             <div class="flex-1">
                                 <div class="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                                     <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-800"></i>
                                     Twilio Unified Emergency SMS Notification
+                                    <span class="ml-1 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] rounded font-bold">PERMANENTLY ENABLED</span>
                                 </div>
                                 <div class="text-[11px] text-slate-500">Instant SMS text alerts with district hazard level, rainfall intensity, and evacuation directives.</div>
                             </div>
@@ -1182,9 +1192,9 @@
         // CITIZEN TELECOM ALERT SUBSCRIPTION (SMS & FEATURE PHONE IVR BROADCAST)
         // =========================================================================
 
-        function getSmsCheckbox() {
-            return document.getElementById("channelSms") || document.getElementById("sms-checkbox") || document.querySelector("input[name='sms-checkbox']");
-        }
+        // =========================================================================
+        // CITIZEN TELECOM ALERT SUBSCRIPTION (SMS & FEATURE PHONE IVR BROADCAST)
+        // =========================================================================
 
         function getIvrCheckbox() {
             return document.getElementById("channelVoice") || document.getElementById("ivr-checkbox") || document.querySelector("input[name='ivr-checkbox']");
@@ -1207,7 +1217,6 @@
             const districtLabel = document.getElementById("telecomModalDistrict");
             const phoneInput = document.getElementById("telecomPhoneInput");
             const langSelect = document.getElementById("telecomLangSelect");
-            const smsCheck = getSmsCheckbox();
             const ivrCheck = getIvrCheckbox();
 
             // Update district label from current view
@@ -1225,15 +1234,14 @@
                 langSelect.value = savedLang;
             }
 
-            // Preserve checkbox state: default to true unless explicitly unchecked by user
+            // Permanent Hard-Lock: SMS is always enabled & disabled from user mutation
+            const smsCheck = document.getElementById("channelSms");
             if (smsCheck) {
-                const savedSms = localStorage.getItem('weathergpt_telecom_sms');
-                if (savedSms !== null) {
-                    smsCheck.checked = savedSms !== 'false';
-                } else if (!smsCheck.hasAttribute('data-user-modified')) {
-                    smsCheck.checked = true;
-                }
+                smsCheck.checked = true;
+                smsCheck.disabled = true;
             }
+
+            // Restore IVR preference
             if (ivrCheck) {
                 const savedIvr = localStorage.getItem('weathergpt_telecom_ivr');
                 if (savedIvr !== null) {
@@ -1275,14 +1283,12 @@
 
         // Setup persistent change listeners on alert channel checkboxes
         document.addEventListener("DOMContentLoaded", () => {
-            const smsCheck = getSmsCheckbox();
-            const ivrCheck = getIvrCheckbox();
+            const smsCheck = document.getElementById("channelSms");
             if (smsCheck) {
-                smsCheck.addEventListener("change", (e) => {
-                    smsCheck.setAttribute("data-user-modified", "true");
-                    localStorage.setItem('weathergpt_telecom_sms', e.target.checked ? 'true' : 'false');
-                });
+                smsCheck.checked = true;
+                smsCheck.disabled = true;
             }
+            const ivrCheck = getIvrCheckbox();
             if (ivrCheck) {
                 ivrCheck.addEventListener("change", (e) => {
                     ivrCheck.setAttribute("data-user-modified", "true");
@@ -1310,29 +1316,24 @@
             }
 
             const formattedPhone = `+91${cleanPhone}`;
-            const smsCheck = getSmsCheckbox();
+            const isSmsEnabled = true; // Permanently hard-locked to true
             const ivrCheck = getIvrCheckbox();
-            const isSmsEnabled = smsCheck ? smsCheck.checked : true;
             const isIvrEnabled = ivrCheck ? ivrCheck.checked : true;
             const lang = document.getElementById("telecomLangSelect") ? document.getElementById("telecomLangSelect").value : "en";
             const district = currentLocation || "Khordha";
 
-            // Save preferences without altering current checkbox checked state
+            // Save preferences
             localStorage.setItem('weathergpt_telecom_phone', cleanPhone);
-            localStorage.setItem('weathergpt_telecom_sms', isSmsEnabled.toString());
+            localStorage.setItem('weathergpt_telecom_sms', 'true');
             localStorage.setItem('weathergpt_telecom_ivr', isIvrEnabled.toString());
             localStorage.setItem('weathergpt_telecom_lang', lang);
             localStorage.setItem('weathergpt_telecom_subscribed', 'true');
 
             // Dispatch multichannel alert or single channel based on subscription
-            if (isSmsEnabled && isIvrEnabled) {
+            if (isIvrEnabled) {
                 await dispatchMultichannelAlert(e, formattedPhone);
-            } else if (isIvrEnabled) {
-                await triggerIvrEmergencyCall(formattedPhone);
-            } else if (isSmsEnabled) {
-                await sendTwilioEmergencySms(e, formattedPhone);
             } else {
-                await dispatchMultichannelAlert(e, formattedPhone);
+                await sendTwilioEmergencySms(e, formattedPhone);
             }
             updateTelecomButtonUI();
         }
@@ -1354,19 +1355,14 @@
             }
 
             const formattedPhone = `+91${cleanPhone}`;
-            const smsCheck = getSmsCheckbox();
+            const isSmsEnabled = true; // Permanently hard-locked to true
             const ivrCheck = getIvrCheckbox();
-            const isSmsEnabled = smsCheck ? smsCheck.checked : true;
             const isIvrEnabled = ivrCheck ? ivrCheck.checked : true;
 
-            if (isSmsEnabled && isIvrEnabled) {
+            if (isIvrEnabled) {
                 await dispatchMultichannelAlert(e, formattedPhone);
-            } else if (isIvrEnabled) {
-                await triggerIvrEmergencyCall(formattedPhone);
-            } else if (isSmsEnabled) {
-                await sendTwilioEmergencySms(e, formattedPhone);
             } else {
-                await dispatchMultichannelAlert(e, formattedPhone);
+                await sendTwilioEmergencySms(e, formattedPhone);
             }
         }
 
