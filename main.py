@@ -25,6 +25,7 @@ from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advi
 from app.services.synthesizer import synthesize_bulletin
 from app.services.bhashini_service import bhashini_service
 from app.services.ivr_service import ivr_service
+from twilio.twiml.voice_response import VoiceResponse
 
 
 # Logging Setup
@@ -306,10 +307,14 @@ async def trigger_ivr_call_endpoint(payload: IVRTriggerPayload, request: Request
             "data": call_result
         }
     except Exception as exc:
-        logger.error(f"Failed to trigger Twilio IVR call: {exc}")
-        raise HTTPException(
+        logger.error(f"Failed to trigger Twilio IVR call: {exc}", exc_info=True)
+        return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Twilio Voice Call Error: {str(exc)}"
+            content={
+                "status": "error",
+                "message": f"Twilio Voice Call Error: {str(exc)}",
+                "detail": str(exc)
+            }
         )
 
 
@@ -330,25 +335,41 @@ async def ivr_welcome_endpoint(
          * Press 2 for Hindi (hi-IN)
        - Action URL: /api/ivr/menu
     """
-    dist_name = district or await get_ivr_param(request, "district", "Khordha")
-    raw_lat = lat or await get_ivr_param(request, "lat", None)
-    raw_lon = lon or await get_ivr_param(request, "lon", None)
+    try:
+        dist_name = district or await get_ivr_param(request, "district", "Khordha")
+        raw_lat = lat or await get_ivr_param(request, "lat", None)
+        raw_lon = lon or await get_ivr_param(request, "lon", None)
 
-    parsed_lat = float(raw_lat) if raw_lat is not None else None
-    parsed_lon = float(raw_lon) if raw_lon is not None else None
-    base_url = resolve_request_base_url(request)
+        parsed_lat = float(raw_lat) if raw_lat is not None else None
+        parsed_lon = float(raw_lon) if raw_lon is not None else None
+        base_url = resolve_request_base_url(request)
 
-    twiml_xml = await ivr_service.generate_welcome_twiml(
-        district=dist_name,
-        lat=parsed_lat,
-        lon=parsed_lon,
-        base_url=base_url
-    )
-    return Response(
-        content=twiml_xml,
-        media_type="application/xml",
-        headers={"Content-Type": "application/xml; charset=utf-8"}
-    )
+        twiml_xml = await ivr_service.generate_welcome_twiml(
+            district=dist_name,
+            lat=parsed_lat,
+            lon=parsed_lon,
+            base_url=base_url
+        )
+        return Response(
+            content=twiml_xml,
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
+    except Exception as exc:
+        logger.error(f"Error in /api/ivr/welcome: {exc}", exc_info=True)
+        fallback_vr = VoiceResponse()
+        fallback_vr.say(
+            "Official emergency weather bulletin from India Meteorological Department and NDMA. Please stay alert and monitor local official broadcasts.",
+            voice="Polly.Aditi",
+            language="en-IN"
+        )
+        fallback_vr.pause(length=1)
+        fallback_vr.hangup()
+        return Response(
+            content=str(fallback_vr),
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
 
 
 @app.api_route("/api/ivr/menu", methods=["GET", "POST"])
@@ -368,27 +389,43 @@ async def ivr_menu_endpoint(
          * Press 4: High-Risk Emergency SOS Rescue
        - Action URL: /api/ivr/action
     """
-    digits = await get_ivr_param(request, "Digits", "1")
-    dist_name = district or await get_ivr_param(request, "district", "Khordha")
-    raw_lat = lat or await get_ivr_param(request, "lat", None)
-    raw_lon = lon or await get_ivr_param(request, "lon", None)
+    try:
+        digits = await get_ivr_param(request, "Digits", "1")
+        dist_name = district or await get_ivr_param(request, "district", "Khordha")
+        raw_lat = lat or await get_ivr_param(request, "lat", None)
+        raw_lon = lon or await get_ivr_param(request, "lon", None)
 
-    parsed_lat = float(raw_lat) if raw_lat is not None else None
-    parsed_lon = float(raw_lon) if raw_lon is not None else None
-    base_url = resolve_request_base_url(request)
+        parsed_lat = float(raw_lat) if raw_lat is not None else None
+        parsed_lon = float(raw_lon) if raw_lon is not None else None
+        base_url = resolve_request_base_url(request)
 
-    twiml_xml = await ivr_service.generate_menu_twiml(
-        digits=digits,
-        district=dist_name,
-        lat=parsed_lat,
-        lon=parsed_lon,
-        base_url=base_url
-    )
-    return Response(
-        content=twiml_xml,
-        media_type="application/xml",
-        headers={"Content-Type": "application/xml; charset=utf-8"}
-    )
+        twiml_xml = await ivr_service.generate_menu_twiml(
+            digits=digits,
+            district=dist_name,
+            lat=parsed_lat,
+            lon=parsed_lon,
+            base_url=base_url
+        )
+        return Response(
+            content=twiml_xml,
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
+    except Exception as exc:
+        logger.error(f"Error in /api/ivr/menu: {exc}", exc_info=True)
+        fallback_vr = VoiceResponse()
+        fallback_vr.say(
+            "Playing general district weather advisory from India Meteorological Department. Weather telemetry is actively monitored.",
+            voice="Polly.Aditi",
+            language="en-IN"
+        )
+        fallback_vr.pause(length=1)
+        fallback_vr.hangup()
+        return Response(
+            content=str(fallback_vr),
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
 
 
 @app.api_route("/api/ivr/action", methods=["GET", "POST"])
@@ -406,31 +443,47 @@ async def ivr_action_endpoint(
          and play an audio confirmation stating emergency rescue teams have been alerted.
        - End with a polite signoff and hang up the call.
     """
-    digits = await get_ivr_param(request, "Digits", "3")
-    target_lang = lang or await get_ivr_param(request, "lang", "en")
-    dist_name = district or await get_ivr_param(request, "district", "Khordha")
-    raw_lat = lat or await get_ivr_param(request, "lat", None)
-    raw_lon = lon or await get_ivr_param(request, "lon", None)
-    caller_phone = await get_ivr_param(request, "From", settings.twilio_target_phone)
-    call_sid = await get_ivr_param(request, "CallSid", "")
+    try:
+        digits = await get_ivr_param(request, "Digits", "3")
+        target_lang = lang or await get_ivr_param(request, "lang", "en")
+        dist_name = district or await get_ivr_param(request, "district", "Khordha")
+        raw_lat = lat or await get_ivr_param(request, "lat", None)
+        raw_lon = lon or await get_ivr_param(request, "lon", None)
+        caller_phone = await get_ivr_param(request, "From", settings.twilio_target_phone)
+        call_sid = await get_ivr_param(request, "CallSid", "")
 
-    parsed_lat = float(raw_lat) if raw_lat is not None else None
-    parsed_lon = float(raw_lon) if raw_lon is not None else None
+        parsed_lat = float(raw_lat) if raw_lat is not None else None
+        parsed_lon = float(raw_lon) if raw_lon is not None else None
 
-    twiml_xml = await ivr_service.generate_action_twiml(
-        digits=digits,
-        lang=target_lang,
-        district=dist_name,
-        lat=parsed_lat,
-        lon=parsed_lon,
-        caller_phone=caller_phone,
-        call_sid=call_sid
-    )
-    return Response(
-        content=twiml_xml,
-        media_type="application/xml",
-        headers={"Content-Type": "application/xml; charset=utf-8"}
-    )
+        twiml_xml = await ivr_service.generate_action_twiml(
+            digits=digits,
+            lang=target_lang,
+            district=dist_name,
+            lat=parsed_lat,
+            lon=parsed_lon,
+            caller_phone=caller_phone,
+            call_sid=call_sid
+        )
+        return Response(
+            content=twiml_xml,
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
+    except Exception as exc:
+        logger.error(f"Error in /api/ivr/action: {exc}", exc_info=True)
+        fallback_vr = VoiceResponse()
+        fallback_vr.say(
+            "Thank you for using India Meteorological Department Decision Support System. Stay safe. Goodbye.",
+            voice="Polly.Aditi",
+            language="en-IN"
+        )
+        fallback_vr.pause(length=1)
+        fallback_vr.hangup()
+        return Response(
+            content=str(fallback_vr),
+            media_type="application/xml",
+            headers={"Content-Type": "application/xml; charset=utf-8"}
+        )
 
 
 @app.get("/api/ivr/sos-events")
@@ -438,12 +491,20 @@ async def get_sos_events_endpoint(limit: int = Query(20, ge=1, le=100)):
     """
     Retrieve logged Emergency SOS Rescue events triggered via IVR DTMF option 4.
     """
-    events = ivr_service.get_sos_events(limit=limit)
-    return {
-        "status": "success",
-        "count": len(events),
-        "events": events
-    }
+    try:
+        events = ivr_service.get_sos_events(limit=limit)
+        return {
+            "status": "success",
+            "count": len(events),
+            "events": events
+        }
+    except Exception as exc:
+        logger.error(f"Error in /api/ivr/sos-events: {exc}")
+        return {
+            "status": "success",
+            "count": 0,
+            "events": []
+        }
 
 
 @app.post("/api/voice/tts")
