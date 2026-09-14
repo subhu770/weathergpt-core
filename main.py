@@ -98,6 +98,17 @@ class IVRTriggerPayload(BaseModel):
     language: Optional[str] = Field(default="en", description="Default initial language ('en', 'hi')")
 
 
+class SendSMSPayload(BaseModel):
+    """Schema for unified Twilio Emergency SMS Notification."""
+    phone: Optional[str] = Field(default="+917735529862", description="Recipient phone number (e.g. +917735529862)")
+    target_phone: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
+    phone_number: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
+    district: Optional[str] = Field(default="Khordha", description="Target administrative Indian district")
+    hazard_level: Optional[str] = Field(default="RED", description="IMD Hazard level (RED, ORANGE, YELLOW, GREEN)")
+    alert_level: Optional[str] = Field(default=None, description="Alternative key for hazard level")
+    message: Optional[str] = Field(default=None, description="Custom emergency SMS body")
+
+
 
 
 @app.post("/api/telecom/broadcast")
@@ -313,6 +324,41 @@ async def trigger_ivr_call_endpoint(payload: IVRTriggerPayload, request: Request
             content={
                 "status": "error",
                 "message": f"Twilio Voice Call Error: {str(exc)}",
+                "detail": str(exc)
+            }
+        )
+
+
+@app.post("/api/alerts/send-sms")
+async def send_emergency_sms_endpoint(payload: SendSMSPayload):
+    """
+    POST /api/alerts/send-sms:
+    - Accepts: phone (default: "+917735529862"), district, hazard_level, message.
+    - Uses Twilio Client: client.messages.create(to=phone, from_=TWILIO_PHONE_NUMBER, body=...)
+    - Returns: {"status": "success", "message_sid": message.sid}
+    """
+    phone_to_send = payload.phone or payload.target_phone or payload.phone_number or settings.twilio_target_phone
+    hazard_lvl = payload.hazard_level or payload.alert_level or "RED"
+    dist = payload.district or "Khordha"
+    try:
+        sms_result = await ivr_service.send_emergency_sms(
+            target_phone=phone_to_send,
+            district=dist,
+            hazard_level=hazard_lvl,
+            message=payload.message
+        )
+        return {
+            "status": "success",
+            "message_sid": sms_result["message_sid"],
+            "data": sms_result
+        }
+    except Exception as exc:
+        logger.error(f"Failed to send emergency SMS: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "status": "error",
+                "message": f"Twilio SMS Error: {str(exc)}",
                 "detail": str(exc)
             }
         )
