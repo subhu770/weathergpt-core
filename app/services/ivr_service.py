@@ -158,6 +158,41 @@ class TwilioIVRService:
             logger.error(f"Unexpected error triggering Twilio call: {exc}")
             raise RuntimeError(f"Failed to initiate Twilio voice call: {str(exc)}")
 
+    def add_ssml_speech(
+        self,
+        parent: Any,
+        text: str,
+        language: str = "en",
+        voice: Optional[str] = None,
+        rate: str = "95%",
+        break_ms: str = "500ms"
+    ) -> Say:
+        """
+        Renders a natural, high-clarity SSML speech block into a VoiceResponse or Gather.
+        - English uses Polly.Kajal-Neural (en-IN)
+        - Hindi uses Polly.Aditi (hi-IN)
+        - Steady speaking rate with 95% prosody (<prosody rate="95%">)
+        - 500ms natural pauses between sentences (<break time="500ms"/>)
+        """
+        is_hindi = language.lower().startswith("hi")
+        selected_voice = voice or ("Polly.Aditi" if is_hindi else "Polly.Kajal-Neural")
+        selected_lang = "hi-IN" if is_hindi else "en-IN"
+
+        # Regex splits on sentence endings without splitting decimal numbers like 12.0 or 28.5
+        import re
+        pattern = r'(?<=[!?।]|(?<!\d)\.(?!\d))\s+'
+        sentences = [s.strip() for s in re.split(pattern, text) if s.strip()]
+
+        if not sentences:
+            sentences = [text.strip()] if text.strip() else []
+
+        say = parent.say(voice=selected_voice, language=selected_lang)
+        for idx, sentence in enumerate(sentences):
+            say.prosody(words=sentence, rate=rate)
+            if idx < len(sentences) - 1:
+                say.break_(time=break_ms)
+        return say
+
     async def generate_welcome_twiml(
         self,
         district: str,
@@ -167,7 +202,8 @@ class TwilioIVRService:
     ) -> str:
         """
         Generate TwiML for POST /api/ivr/welcome:
-        - Speaks immediate dynamic emergency greeting for the detected district (hazard level, wind, rain).
+        - Speaks immediate dynamic emergency greeting for the detected district (hazard level, wind, rain)
+          with natural SSML pacing and neural Indic voice.
         - Prompts for language selection via DTMF Gather (1 for English, 2 for Hindi).
         - Action URL: /api/ivr/menu
         """
@@ -208,7 +244,7 @@ class TwilioIVRService:
         # Build TwiML VoiceResponse
         vr = VoiceResponse()
 
-        # 1. Immediate dynamic emergency alert greeting (English & Hindi)
+        # 1. Immediate dynamic emergency alert greeting with SSML cadence
         if hazard_level in ["RED", "ORANGE"]:
             greeting_en = (
                 f"Severe weather emergency alert from India Meteorological Department and NDMA for {dist_name}. "
@@ -222,7 +258,7 @@ class TwilioIVRService:
                 f"Temperature is {temp:.0f} degrees Celsius with wind speed {wind_spd:.0f} kilometers per hour."
             )
 
-        vr.say(greeting_en, voice="Polly.Aditi", language="en-IN")
+        self.add_ssml_speech(vr, greeting_en, language="en")
         vr.pause(length=1)
 
         # 2. DTMF Gather for Language Selection (1=English, 2=Hindi)
@@ -243,12 +279,12 @@ class TwilioIVRService:
             action=action_url,
             method="POST"
         )
-        gather.say("For English, press 1.", voice="Polly.Aditi", language="en-IN")
-        gather.say("हिन्दी के लिए 2 दबाएँ।", voice="Polly.Aditi", language="hi-IN")
+        self.add_ssml_speech(gather, "For English, press 1.", language="en")
+        self.add_ssml_speech(gather, "हिन्दी के लिए 2 दबाएँ।", language="hi")
         vr.append(gather)
 
         # Fallback if no digit pressed: redirect to English menu
-        vr.say("No input received. Continuing in English.", voice="Polly.Aditi", language="en-IN")
+        self.add_ssml_speech(vr, "No input received. Continuing in English.", language="en")
         vr.redirect(f"{action_url}&Digits=1", method="POST")
 
         return str(vr)
@@ -264,7 +300,7 @@ class TwilioIVRService:
         """
         Generate TwiML for POST /api/ivr/menu:
         - Reads Digits (1 = English, 2 = Hindi).
-        - Plays the 4-Persona Advisory Menu via DTMF Gather (num_digits=1, timeout=6):
+        - Plays the 4-Persona Advisory Menu via DTMF Gather with SSML pacing:
             * Press 1: Farmer Advisory (agricultural drainage and crop safety guidelines)
             * Press 2: Fisherman Advisory (marine alert, wind surge, harbor docking order)
             * Press 3: General District Weather (temperature, humidity, precipitation metrics)
@@ -298,33 +334,31 @@ class TwilioIVRService:
         )
 
         if lang == "hi":
-            gather.say(
-                f"{dist_name} मौसम विभाग परामर्श सेवा मेनू: "
+            menu_prompt = (
+                f"{dist_name} मौसम विभाग परामर्श सेवा मेनू। "
                 "कृषि एवं फसल सुरक्षा सलाह के लिए 1 दबाएँ। "
                 "मछुआरों के लिए समुद्री सुरक्षा निर्देश हेतु 2 दबाएँ। "
                 "जिले के मौसम और तापमान की जानकारी के लिए 3 दबाएँ। "
-                "आपातकालीन एन डी आर एफ एस ओ एस बचाव सहायता के लिए 4 दबाएँ।",
-                voice="Polly.Aditi",
-                language="hi-IN"
+                "आपातकालीन एन डी आर एफ एस ओ एस बचाव सहायता के लिए 4 दबाएँ।"
             )
+            self.add_ssml_speech(gather, menu_prompt, language="hi")
         else:
-            gather.say(
-                f"WeatherGPT Advisory Menu for {dist_name}: "
+            menu_prompt = (
+                f"WeatherGPT Advisory Menu for {dist_name}. "
                 "Press 1 for Farmer Agricultural Advisory and crop safety guidelines. "
                 "Press 2 for Fisherman Maritime Advisory and wind surge docking orders. "
                 "Press 3 for General District Weather and live telemetry. "
-                "Press 4 for High Risk Emergency S O S Rescue.",
-                voice="Polly.Aditi",
-                language="en-IN"
+                "Press 4 for High Risk Emergency S O S Rescue."
             )
+            self.add_ssml_speech(gather, menu_prompt, language="en")
 
         vr.append(gather)
 
         # Fallback if no digit pressed: repeat menu prompt once then default to option 3
         if lang == "hi":
-            vr.say("कोई विकल्प नहीं मिला। जिले का मौसम बुलेटिन सुनाया जा रहा है।", voice="Polly.Aditi", language="hi-IN")
+            self.add_ssml_speech(vr, "कोई विकल्प नहीं मिला। जिले का मौसम बुलेटिन सुनाया जा रहा है।", language="hi")
         else:
-            vr.say("No input received. Playing general district weather bulletin.", voice="Polly.Aditi", language="en-IN")
+            self.add_ssml_speech(vr, "No input received. Playing general district weather bulletin.", language="en")
 
         vr.redirect(f"{action_url}&Digits=3", method="POST")
         return str(vr)
@@ -341,7 +375,7 @@ class TwilioIVRService:
     ) -> str:
         """
         Generate TwiML for POST /api/ivr/action:
-        - Reads Digits and delivers dynamic advisory generated from WeatherGPT backend in selected language.
+        - Reads Digits and delivers dynamic advisory generated from WeatherGPT backend with natural SSML speech.
         - If Digits == '4', logs emergency SOS event in dashboard state with coordinates and phone,
           and plays audio confirmation stating emergency rescue teams have been alerted.
         - Ends with polite signoff and hangs up the call.
@@ -409,20 +443,20 @@ class TwilioIVRService:
         if selected_digit == "1":
             if target_lang == "hi":
                 speech = (
-                    f"{dist_name} के लिए किसान कृषि परामर्श: "
+                    f"{dist_name} के लिए किसान कृषि परामर्श। "
                     f"कीटनाशक छिड़काव निर्देश: {agro.get('spraying_desc_hi', '')} "
                     f"सिंचाई एवं जल निकासी: {agro.get('irrigation_hi', '')} "
                     f"फसल कटाई निर्देश: {agro.get('harvesting_hi', '')}"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="hi-IN")
+                self.add_ssml_speech(vr, speech, language="hi")
             else:
                 speech = (
-                    f"Farmer Agricultural Advisory for {dist_name}: "
-                    f"Chemical spraying window: {agro.get('spraying_desc_en', '')}. "
-                    f"Irrigation and field drainage: {agro.get('irrigation_en', '')}. "
-                    f"Harvest directives: {agro.get('harvesting_en', '')}."
+                    f"Farmer Agricultural Advisory for {dist_name}. "
+                    f"Chemical spraying window: {agro.get('spraying_desc_en', '')} "
+                    f"Irrigation and field drainage: {agro.get('irrigation_en', '')} "
+                    f"Harvest directives: {agro.get('harvesting_en', '')}"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="en-IN")
+                self.add_ssml_speech(vr, speech, language="en")
 
         # =========================================================================
         # 2. OPTION 2: FISHERMAN ADVISORY (Maritime Alert & Port Docking)
@@ -430,18 +464,18 @@ class TwilioIVRService:
         elif selected_digit == "2":
             if target_lang == "hi":
                 speech = (
-                    f"{dist_name} तटीय क्षेत्र के लिए मछुआरा सुरक्षा निर्देश: "
-                    f"समुद्र की स्थिति: {marine.get('sea_state_hi', '')}. "
+                    f"{dist_name} तटीय क्षेत्र के लिए मछुआरा सुरक्षा निर्देश। "
+                    f"समुद्र की स्थिति: {marine.get('sea_state_hi', '')} "
                     f"मार्गदर्शन: {marine.get('advisory_hi', '')}"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="hi-IN")
+                self.add_ssml_speech(vr, speech, language="hi")
             else:
                 speech = (
-                    f"Maritime and Fishermen Directive for {dist_name}: "
-                    f"Current sea state: {marine.get('sea_state_en', '')}. "
-                    f"Maritime advisory: {marine.get('advisory_en', '')}."
+                    f"Maritime and Fishermen Directive for {dist_name}. "
+                    f"Current sea state: {marine.get('sea_state_en', '')} "
+                    f"Maritime advisory: {marine.get('advisory_en', '')}"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="en-IN")
+                self.add_ssml_speech(vr, speech, language="en")
 
         # =========================================================================
         # 3. OPTION 3: GENERAL DISTRICT WEATHER TELEMETRY
@@ -456,22 +490,23 @@ class TwilioIVRService:
 
             if target_lang == "hi":
                 speech = (
-                    f"{dist_name} का लाइव मौसम विवरण: "
+                    f"{dist_name} का लाइव मौसम विवरण। "
                     f"सतही तापमान {temp_c:.1f} डिग्री सेल्सियस है, जो {feels_c:.1f} डिग्री महसूस हो रहा है। "
-                    f"आर्द्रता {humidity} प्रतिशत है। पवन गति {wind_k:.1f} किलोमीटर प्रति घंटा है। "
+                    f"आर्द्रता {humidity} प्रतिशत है। "
+                    f"पवन गति {wind_k:.1f} किलोमीटर प्रति घंटा है। "
                     f"वर्षा {rain_m:.1f} मिलीमीटर दर्ज की गई है। "
                     f"आपदा चेतावनी स्तर {alert_lvl} है।"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="hi-IN")
+                self.add_ssml_speech(vr, speech, language="hi")
             else:
                 speech = (
-                    f"Live Meteorological Telemetry for {dist_name}: "
+                    f"Live Meteorological Telemetry for {dist_name}. "
                     f"Surface temperature is {temp_c:.1f} degrees Celsius, feels like {feels_c:.1f} degrees. "
                     f"Relative humidity is {humidity} percent. "
                     f"Wind speed is {wind_k:.1f} kilometers per hour with {rain_m:.1f} millimeters of rainfall. "
                     f"IMD Hazard Alert Status is {alert_lvl}."
                 )
-                vr.say(speech, voice="Polly.Aditi", language="en-IN")
+                self.add_ssml_speech(vr, speech, language="en")
 
         # =========================================================================
         # 4. OPTION 4: HIGH-RISK EMERGENCY SOS RESCUE
@@ -492,35 +527,34 @@ class TwilioIVRService:
 
             if target_lang == "hi":
                 speech = (
-                    f"आपातकालीन एस ओ एस संदेश प्राप्त हुआ। {dist_name} में आपके स्थान की जानकारी "
-                    f"राष्ट्रीय आपदा प्रबंधन प्राधिकरण (एन डी एम ए) और स्थानीय आपदा राहत दल को तुरंत प्रेषित कर दी गई है। "
+                    f"आपातकालीन एस ओ एस संदेश प्राप्त हुआ। "
+                    f"{dist_name} में आपके स्थान की जानकारी राष्ट्रीय आपदा प्रबंधन प्राधिकरण (एन डी एम ए) और स्थानीय आपदा राहत दल को तुरंत प्रेषित कर दी गई है। "
                     f"बचाव दल को आपके पंजीकृत नंबर {caller} पर सतर्क कर दिया गया है और सहायता रवाना कर दी गई है। "
-                    f"कृपया तुरंत सुरक्षित पक्के भवन में रहें। सहायता शीघ्र पहुँच रही है।"
+                    "कृपया तुरंत सुरक्षित पक्के भवन में रहें। सहायता शीघ्र पहुँच रही है।"
                 )
-                vr.say(speech, voice="Polly.Aditi", language="hi-IN")
+                self.add_ssml_speech(vr, speech, language="hi")
             else:
                 speech = (
-                    f"Emergency S O S received. Your geographic coordinates in {dist_name} at "
-                    f"{resolved_lat:.2f} degrees North, {resolved_lon:.2f} degrees East have been immediately flagged "
-                    f"to the National Disaster Management Authority and Local Emergency Rescue Operations. "
+                    f"Emergency S O S received. "
+                    f"Your geographic coordinates in {dist_name} at {resolved_lat:.2f} degrees North, {resolved_lon:.2f} degrees East have been immediately flagged to the National Disaster Management Authority and Local Emergency Rescue Operations. "
                     f"Emergency rescue teams have been alerted and dispatched to your registered phone number {caller}. "
-                    f"Please stay inside a secure reinforced shelter. Rescue units are on the way."
+                    "Please stay inside a secure reinforced shelter. Rescue units are on the way."
                 )
-                vr.say(speech, voice="Polly.Aditi", language="en-IN")
+                self.add_ssml_speech(vr, speech, language="en")
 
         # Fallback for unrecognized digit
         else:
             if target_lang == "hi":
-                vr.say("अमान्य विकल्प चुना गया।", voice="Polly.Aditi", language="hi-IN")
+                self.add_ssml_speech(vr, "अमान्य विकल्प चुना गया।", language="hi")
             else:
-                vr.say("Invalid menu selection.", voice="Polly.Aditi", language="en-IN")
+                self.add_ssml_speech(vr, "Invalid menu selection.", language="en")
 
         # Polite Signoff & Hangup
         vr.pause(length=1)
         if target_lang == "hi":
-            vr.say("भारत मौसम विज्ञान विभाग निर्णय प्रणाली का उपयोग करने के लिए धन्यवाद। सुरक्षित रहें। नमस्ते।", voice="Polly.Aditi", language="hi-IN")
+            self.add_ssml_speech(vr, "भारत मौसम विज्ञान विभाग निर्णय प्रणाली का उपयोग करने के लिए धन्यवाद। सुरक्षित रहें। नमस्ते।", language="hi")
         else:
-            vr.say("Thank you for using India Meteorological Department Decision Support System. Stay safe. Goodbye.", voice="Polly.Aditi", language="en-IN")
+            self.add_ssml_speech(vr, "Thank you for using India Meteorological Department Decision Support System. Stay safe. Goodbye.", language="en")
 
         vr.hangup()
         return str(vr)
