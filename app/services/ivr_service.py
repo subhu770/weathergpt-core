@@ -203,13 +203,14 @@ class TwilioIVRService:
 
         dist = (district or "Khordha").strip()
 
-        # 2. Clean dynamic weather data safely
-        if weather_data is None and hazard_level:
-            weather_data = {"hazard_level": hazard_level}
+        # 2. Clean dynamic weather data safely with explicit fallbacks only if missing/null
+        temp_val = weather_data.get("temp") if weather_data else None
+        wind_val = weather_data.get("wind_speed") if weather_data else None
+        hazard_val = (weather_data.get("hazard_level") if weather_data else None) or hazard_level
 
-        t = weather_data.get("temp", 28.5) if weather_data else 28.5
-        w = weather_data.get("wind_speed", 18.0) if weather_data else 18.0
-        h = weather_data.get("hazard_level", "Yellow Alert") if weather_data else "Yellow Alert"
+        t = temp_val if (temp_val is not None and temp_val != "") else 28.5
+        w = wind_val if (wind_val is not None and wind_val != "") else 18.0
+        h = hazard_val if (hazard_val is not None and hazard_val != "") else "Yellow Alert"
 
         # 3. Body text
         msg = f"WeatherGPT Alert: {dist} is under {h}. Temp: {t}C, Wind: {w} km/h. Stay indoors and alert."
@@ -825,13 +826,15 @@ def send_emergency_sms(
 
     dist = (district or "Khordha").strip()
 
+    # Clean dynamic weather data safely with explicit fallbacks only if missing/null
     hazard_level = kwargs.get("hazard_level")
-    if weather_data is None and hazard_level:
-        weather_data = {"hazard_level": hazard_level}
+    temp_val = weather_data.get("temp") if weather_data else None
+    wind_val = weather_data.get("wind_speed") if weather_data else None
+    hazard_val = (weather_data.get("hazard_level") if weather_data else None) or hazard_level
 
-    t = weather_data.get("temp", 28.5) if weather_data else 28.5
-    w = weather_data.get("wind_speed", 18.0) if weather_data else 18.0
-    h = weather_data.get("hazard_level", "Yellow Alert") if weather_data else "Yellow Alert"
+    t = temp_val if (temp_val is not None and temp_val != "") else 28.5
+    w = wind_val if (wind_val is not None and wind_val != "") else 18.0
+    h = hazard_val if (hazard_val is not None and hazard_val != "") else "Yellow Alert"
 
     msg = f"WeatherGPT Alert: {dist} is under {h}. Temp: {t}C, Wind: {w} km/h. Stay indoors and alert."
 

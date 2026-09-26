@@ -98,14 +98,15 @@ class IVRTriggerPayload(BaseModel):
 
 
 class SendSMSPayload(BaseModel):
-    """Schema for unified Twilio Emergency SMS Notification."""
+    """Schema for Fast2SMS Emergency SMS Notification."""
     phone: Optional[str] = Field(default="+917735529862", description="Recipient phone number (e.g. +917735529862)")
     target_phone: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
     phone_number: Optional[str] = Field(default=None, description="Alternative key for recipient phone number")
     district: Optional[str] = Field(default="Khordha", description="Target administrative Indian district")
-    hazard_level: Optional[str] = Field(default="RED", description="IMD Hazard level (RED, ORANGE, YELLOW, GREEN)")
+    hazard_level: Optional[str] = Field(default=None, description="IMD Hazard level (RED, ORANGE, YELLOW, GREEN)")
     alert_level: Optional[str] = Field(default=None, description="Alternative key for hazard level")
     message: Optional[str] = Field(default=None, description="Custom emergency SMS body")
+    weather_data: Optional[Dict[str, Any]] = Field(default=None, description="Dynamic live weather telemetry data (temp, wind_speed, hazard_level)")
 
 
 
@@ -332,20 +333,28 @@ async def trigger_ivr_call_endpoint(payload: IVRTriggerPayload, request: Request
 async def send_emergency_sms_endpoint(payload: SendSMSPayload):
     """
     POST /api/alerts/send-sms:
-    - Accepts: phone (default: "+917735529862"), district, hazard_level, message.
+    - Accepts: phone (default: "+917735529862"), district, weather_data (temp, wind_speed, hazard_level), message.
     - Dispatches live physical SMS alerts via Fast2SMS Quick Transactional API.
     - Returns: {"status": "success", "message_sid": ..., "data": ...}
     """
     phone_to_send = payload.phone or payload.target_phone or payload.phone_number or settings.twilio_target_phone
-    hazard_lvl = payload.hazard_level or payload.alert_level or "Yellow Alert"
     dist = payload.district or "Khordha"
+    
+    # Parse dynamic weather telemetry directly from request payload
+    weather_payload = payload.weather_data if isinstance(payload.weather_data, dict) else None
+    hazard_fallback = payload.hazard_level or payload.alert_level
+    if weather_payload is not None and "hazard_level" not in weather_payload and hazard_fallback:
+        weather_payload["hazard_level"] = hazard_fallback
+    elif weather_payload is None and hazard_fallback:
+        weather_payload = {"hazard_level": hazard_fallback}
+
     try:
         sms_result = await ivr_service.send_emergency_sms(
             phone=phone_to_send,
             district=dist,
-            weather_data={"hazard_level": hazard_lvl},
+            weather_data=weather_payload,
             target_phone=phone_to_send,
-            hazard_level=hazard_lvl,
+            hazard_level=hazard_fallback,
             message=payload.message
         )
         is_success = sms_result.get("success", True)
