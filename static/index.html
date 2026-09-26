@@ -359,7 +359,7 @@
                     <i data-lucide="thermometer" class="w-4 h-4 text-blue-800"></i>
                 </div>
                 <div class="flex items-baseline space-x-1.5">
-                    <span id="surface-temperature" class="text-3xl font-extrabold font-mono text-slate-900"><span id="tempValue">--</span></span>
+                    <span id="surface-temperature" class="text-3xl font-extrabold font-mono text-slate-900"><span id="surface-temp" data-temp><span id="tempValue">--</span></span></span>
                     <span class="text-slate-600 font-semibold text-lg">°C</span>
                 </div>
                 <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
@@ -378,7 +378,7 @@
                     <i data-lucide="wind" class="w-4 h-4 text-blue-800"></i>
                 </div>
                 <div class="flex items-baseline space-x-1.5">
-                    <span id="wind-velocity" class="text-3xl font-extrabold font-mono text-slate-900"><span id="windSpeedValue">--</span></span>
+                    <span id="wind-velocity" class="text-3xl font-extrabold font-mono text-slate-900"><span id="wind-speed" data-wind><span id="windSpeedValue">--</span></span></span>
                     <span class="text-slate-600 font-semibold text-sm">km/h</span>
                 </div>
                 <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
@@ -1330,50 +1330,14 @@
          * Extract active live weather telemetry directly from DOM elements
          */
         function getActiveWeatherTelemetry() {
-            // 1. Surface Temp: parse from #surface-temperature or #tempValue element
-            let temp = null;
-            const tempEl = document.getElementById("surface-temperature") || document.getElementById("tempValue");
-            if (tempEl) {
-                const match = tempEl.textContent.match(/-?\d+(\.\d+)?/);
-                if (match) temp = parseFloat(match[0]);
-            }
-            if (temp === null && latestApiResponse?.telemetry?.temperature_c !== undefined) {
-                temp = parseFloat(latestApiResponse.telemetry.temperature_c);
-            }
-            if (temp === null || isNaN(temp)) temp = 28.5;
-
-            // 2. Wind Speed: parse from #wind-velocity or #windSpeedValue element
-            let wind = null;
-            const windEl = document.getElementById("wind-velocity") || document.getElementById("windSpeedValue");
-            if (windEl) {
-                const match = windEl.textContent.match(/-?\d+(\.\d+)?/);
-                if (match) wind = parseFloat(match[0]);
-            }
-            if (wind === null && latestApiResponse?.telemetry?.wind_speed_kmh !== undefined) {
-                wind = parseFloat(latestApiResponse.telemetry.wind_speed_kmh);
-            }
-            if (wind === null || isNaN(wind)) wind = 18.0;
-
-            // 3. Hazard Level: extract from alert badge
-            let hazard = null;
-            const badgeEl = document.getElementById("alertBadge") || document.getElementById("alert-badge") || document.getElementById("alertTitle");
-            if (badgeEl && badgeEl.textContent) {
-                const text = badgeEl.textContent.toUpperCase();
-                if (text.includes("RED")) hazard = "RED";
-                else if (text.includes("ORANGE")) hazard = "ORANGE";
-                else if (text.includes("YELLOW")) hazard = "YELLOW";
-                else if (text.includes("GREEN")) hazard = "GREEN";
-                else hazard = badgeEl.textContent.trim();
-            }
-            if (!hazard && latestApiResponse?.alert?.level) {
-                hazard = latestApiResponse.alert.level;
-            }
-            if (!hazard) hazard = "YELLOW";
+            const liveTemp = parseFloat(document.querySelector("#surface-temp, [data-temp]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*°C/)?.[1] || 28.5);
+            const liveWind = parseFloat(document.querySelector("#wind-speed, [data-wind]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*km\/h/)?.[1] || 18.0);
+            const liveHazard = (document.body.innerText.includes("YELLOW") ? "YELLOW" : "ALERT");
 
             return {
-                temp: Number(temp.toFixed(1)),
-                wind_speed: Number(wind.toFixed(1)),
-                hazard_level: hazard
+                temp: isNaN(liveTemp) ? 28.5 : Number(liveTemp.toFixed(1)),
+                wind_speed: isNaN(liveWind) ? 18.0 : Number(liveWind.toFixed(1)),
+                hazard_level: liveHazard
             };
         }
 
@@ -1392,6 +1356,11 @@
                 targetPhone = arg2;
             }
             if (e && e.preventDefault) e.preventDefault();
+
+            // Right at the moment of button click / form submission, explicitly extract live DOM text:
+            const liveTemp = parseFloat(document.querySelector("#surface-temp, [data-temp]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*°C/)?.[1] || 28.5);
+            const liveWind = parseFloat(document.querySelector("#wind-speed, [data-wind]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*km\/h/)?.[1] || 18.0);
+            const liveHazard = (document.body.innerText.includes("YELLOW") ? "YELLOW" : "ALERT");
 
             const phoneInput = document.getElementById("telecomPhoneInput");
             let rawPhone = targetPhone;
@@ -1412,16 +1381,10 @@
                 digitsOnly = "91" + digitsOnly.slice(1);
             }
             const phoneToCall = `+${digitsOnly}`;
-            const recipientPhone = phoneToCall;
+            const recipientNumber = phoneToCall;
             const currentDistrict = currentLocation || "Khordha";
             const district = currentDistrict;
             const lang = currentLanguage || "en";
-
-            // Extract dynamic live weather telemetry directly from UI
-            const activeWeather = getActiveWeatherTelemetry();
-            const currentTemp = activeWeather.temp;
-            const currentWind = activeWeather.wind_speed;
-            const currentHazard = activeWeather.hazard_level;
             const condition = latestApiResponse?.telemetry?.condition || "Heavy Precipitation & Gusty Winds";
 
             const multiBtn = document.getElementById("multichannelAlertBtn");
@@ -1460,8 +1423,8 @@
                 statusDetails.textContent = 
                     `[DISPATCHING] Contacting PSTN & Live SMS Gateways...\n` +
                     `[TARGET PHONE] : ${phoneToCall}\n` +
-                    `[DISTRICT]     : ${district} (${currentHazard} Alert)\n` +
-                    `[TELEMETRY]    : Temp: ${currentTemp}°C | Wind: ${currentWind} km/h\n` +
+                    `[DISTRICT]     : ${district} (${liveHazard} Alert)\n` +
+                    `[TELEMETRY]    : Temp: ${liveTemp}°C | Wind: ${liveWind} km/h\n` +
                     `[CHANNELS]     : 1. Twilio Voice IVR Call\n` +
                     `                 2. Fast2SMS Quick Transactional Alert\n` +
                     `                 3. Native Browser Web Push Notification`;
@@ -1473,7 +1436,7 @@
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     try {
-                        sendWeatherAlert(district, currentTemp, currentHazard, condition);
+                        sendWeatherAlert(district, liveTemp, liveHazard, condition);
                         browserNotifStatus = "Delivered (Native Window/PWA Push)";
                     } catch (bErr) {
                         browserNotifStatus = `Error: ${bErr.message}`;
@@ -1482,14 +1445,14 @@
                     try {
                         const perm = await Notification.requestPermission();
                         if (perm === "granted") {
-                            sendWeatherAlert(district, currentTemp, currentHazard, condition);
+                            sendWeatherAlert(district, liveTemp, liveHazard, condition);
                             browserNotifStatus = "Delivered (Permission Granted)";
                         }
                     } catch (e) {}
                 }
             }
 
-            // 2. Concurrently execute Voice IVR call and SMS Alert with live weather_data
+            // 2. Concurrently execute Voice IVR call and SMS Alert with live weather_data dynamically
             const [ivrRes, smsRes] = await Promise.allSettled([
                 fetch("/api/ivr/trigger-call", {
                     method: "POST",
@@ -1509,12 +1472,12 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        phone: recipientPhone,
-                        district: currentDistrict,
+                        phone: recipientNumber,
+                        district: currentDistrict || "Khordha",
                         weather_data: {
-                            temp: currentTemp,
-                            wind_speed: currentWind,
-                            hazard_level: currentHazard
+                            temp: liveTemp,
+                            wind_speed: liveWind,
+                            hazard_level: liveHazard
                         }
                     })
                 }).then(async r => {
@@ -1565,7 +1528,7 @@
                     `[MULTICHANNEL DISPATCH REPORT]\n` +
                     `==================================================\n` +
                     `[TARGET PHONE] : ${phoneToCall} (${district})\n` +
-                    `[TELEMETRY]    : Temp: ${currentTemp}°C | Wind: ${currentWind} km/h | Alert: ${currentHazard}\n` +
+                    `[TELEMETRY]    : Temp: ${liveTemp}°C | Wind: ${liveWind} km/h | Alert: ${liveHazard}\n` +
                     `[1. VOICE IVR] : ${isIvrSuccess ? `INITIATED (SID: ${ivrCallSid})` : `FAILED (${ivrErr})`}\n` +
                     `[2. FAST2SMS]  : ${isSmsSuccess ? `DISPATCHED (ReqID: ${smsMsgSid})` : `FAILED (${smsErr})`}\n` +
                     `[3. WEB PUSH]  : ${browserNotifStatus}\n` +
@@ -1590,7 +1553,7 @@
         }
 
         /**
-         * Dispatch Twilio Emergency SMS Notification
+         * Dispatch Fast2SMS Emergency SMS Notification
          */
         async function sendTwilioEmergencySms(arg1 = null, arg2 = null) {
             let e = null;
@@ -1604,6 +1567,11 @@
                 targetPhone = arg2;
             }
             if (e && e.preventDefault) e.preventDefault();
+
+            // Right at the moment of button click / form submission, explicitly extract live DOM text:
+            const liveTemp = parseFloat(document.querySelector("#surface-temp, [data-temp]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*°C/)?.[1] || 28.5);
+            const liveWind = parseFloat(document.querySelector("#wind-speed, [data-wind]")?.innerText || document.body.innerText.match(/(\d+\.?\d*)\s*km\/h/)?.[1] || 18.0);
+            const liveHazard = (document.body.innerText.includes("YELLOW") ? "YELLOW" : "ALERT");
 
             const phoneInput = document.getElementById("telecomPhoneInput");
             let rawPhone = targetPhone;
@@ -1624,15 +1592,9 @@
                 digitsOnly = "91" + digitsOnly.slice(1);
             }
             const phoneToSend = `+${digitsOnly}`;
-            const recipientPhone = phoneToSend;
+            const recipientNumber = phoneToSend;
             const currentDistrict = currentLocation || "Khordha";
             const district = currentDistrict;
-
-            // Extract dynamic live weather telemetry directly from UI
-            const activeWeather = getActiveWeatherTelemetry();
-            const currentTemp = activeWeather.temp;
-            const currentWind = activeWeather.wind_speed;
-            const currentHazard = activeWeather.hazard_level;
 
             openTelecomModal();
             const statusBox = document.getElementById("telecomStatusBox");
@@ -1658,8 +1620,8 @@
                 statusDetails.textContent = 
                     `[CONNECTING] Contacting Fast2SMS Live Telecom Gateway...\n` +
                     `[TARGET]     : ${phoneToSend}\n` +
-                    `[DISTRICT]   : ${district} (${currentHazard})\n` +
-                    `[TELEMETRY]  : Temp: ${currentTemp}°C | Wind: ${currentWind} km/h\n` +
+                    `[DISTRICT]   : ${district} (${liveHazard})\n` +
+                    `[TELEMETRY]  : Temp: ${liveTemp}°C | Wind: ${liveWind} km/h\n` +
                     `[ENDPOINT]   : POST /api/alerts/send-sms`;
             }
             lucide.createIcons();
@@ -1669,12 +1631,12 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        phone: recipientPhone,
-                        district: currentDistrict,
+                        phone: recipientNumber,
+                        district: currentDistrict || "Khordha",
                         weather_data: {
-                            temp: currentTemp,
-                            wind_speed: currentWind,
-                            hazard_level: currentHazard
+                            temp: liveTemp,
+                            wind_speed: liveWind,
+                            hazard_level: liveHazard
                         }
                     })
                 });
@@ -1703,7 +1665,7 @@
                         `[SMS STATUS]   : delivered / queued\n` +
                         `[GATEWAY SID]   : ${msgSid}\n` +
                         `[RECIPIENT]     : ${phoneToSend} (${district})\n` +
-                        `[TELEMETRY]     : Temp: ${currentTemp}°C | Wind: ${currentWind} km/h | Alert: ${currentHazard}\n` +
+                        `[TELEMETRY]     : Temp: ${liveTemp}°C | Wind: ${liveWind} km/h | Alert: ${liveHazard}\n` +
                         `[GATEWAY]       : Fast2SMS Quick Transactional Route`;
                 }
 
