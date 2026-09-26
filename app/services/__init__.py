@@ -8,7 +8,7 @@ from app.services.weather_service import weather_service, WeatherService, Locati
 from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory
 from app.services.synthesizer import synthesize_bulletin, get_weather_description
 from app.services.bhashini_service import bhashini_service, BhashiniService
-from app.services.ivr_service import ivr_service, TwilioIVRService
+from app.services.ivr_service import ivr_service, TwilioIVRService, send_emergency_sms
 
 __all__ = [
     "weather_service",
@@ -22,6 +22,7 @@ __all__ = [
     "bhashini_service",
     "BhashiniService",
     "ivr_service",
-    "TwilioIVRService"
+    "TwilioIVRService",
+    "send_emergency_sms"
 ]
 

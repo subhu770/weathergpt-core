@@ -63,7 +63,10 @@ class Settings(BaseSettings):
 
     # Fast2SMS Live Telecom SMS Gateway Config
     fast2sms_api_key: str = Field(
-        default="VmkhZTYac57v1uluKI8HOBjFCm6ItczeTLgZfVAsDA7JCEZrbHzxmSMHHcG9",
+        default_factory=lambda: os.getenv(
+            "FAST2SMS_API_KEY",
+            "vmkhZTYac57v1uluKI8HOBjFCm6ItczeTLgZfVAsDA7JCEZrbHzxmSMHHCg9"
+        ),
         description="Fast2SMS Authorization / API Key for live physical SMS dispatch"
     )
     fast2sms_api_url: str = Field(

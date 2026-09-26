@@ -333,22 +333,35 @@ async def send_emergency_sms_endpoint(payload: SendSMSPayload):
     """
     POST /api/alerts/send-sms:
     - Accepts: phone (default: "+917735529862"), district, hazard_level, message.
-    - Uses Twilio Client: client.messages.create(to=phone, from_=TWILIO_PHONE_NUMBER, body=...)
-    - Returns: {"status": "success", "message_sid": message.sid}
+    - Dispatches live physical SMS alerts via Fast2SMS Quick Transactional API.
+    - Returns: {"status": "success", "message_sid": ..., "data": ...}
     """
     phone_to_send = payload.phone or payload.target_phone or payload.phone_number or settings.twilio_target_phone
-    hazard_lvl = payload.hazard_level or payload.alert_level or "RED"
+    hazard_lvl = payload.hazard_level or payload.alert_level or "Yellow Alert"
     dist = payload.district or "Khordha"
     try:
         sms_result = await ivr_service.send_emergency_sms(
-            target_phone=phone_to_send,
+            phone=phone_to_send,
             district=dist,
+            weather_data={"hazard_level": hazard_lvl},
+            target_phone=phone_to_send,
             hazard_level=hazard_lvl,
             message=payload.message
         )
+        is_success = sms_result.get("success", True)
+        res_data = sms_result.get("data", {})
+        request_id = "F2S-QUICK-SMS"
+        if isinstance(res_data, dict):
+            req_id_val = res_data.get("request_id")
+            if req_id_val:
+                request_id = str(req_id_val)
+        elif isinstance(res_data, list) and len(res_data) > 0:
+            request_id = str(res_data[0])
+
         return {
-            "status": "success",
-            "message_sid": sms_result["message_sid"],
+            "status": "success" if is_success else "error",
+            "message_sid": request_id,
+            "success": is_success,
             "data": sms_result
         }
     except Exception as exc:
@@ -357,7 +370,8 @@ async def send_emergency_sms_endpoint(payload: SendSMSPayload):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
                 "status": "error",
-                "message": f"Twilio SMS Error: {str(exc)}",
+                "success": False,
+                "message": f"SMS Dispatch Error: {str(exc)}",
                 "detail": str(exc)
             }
         )

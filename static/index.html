@@ -1633,7 +1633,7 @@
             }
             if (statusDetails) {
                 statusDetails.textContent = 
-                    `[CONNECTING] Contacting Twilio SMS Gateway...\n` +
+                    `[CONNECTING] Contacting Fast2SMS Live Telecom Gateway...\n` +
                     `[TARGET]     : ${phoneToSend}\n` +
                     `[DISTRICT]   : ${district}\n` +
                     `[ENDPOINT]   : POST /api/alerts/send-sms`;
@@ -1660,14 +1660,14 @@
                     throw new Error(result.detail || result.message || `HTTP ${response.status}`);
                 }
 
-                const msgSid = result.message_sid || result.data?.message_sid || "N/A";
+                const msgSid = result.message_sid || result.data?.message_sid || result.data?.data?.request_id || "F2S-SMS";
 
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border-2 border-emerald-500 bg-emerald-50 text-xs leading-relaxed space-y-2 block shadow-md";
                 }
                 if (statusTitle) {
                     statusTitle.className = "font-bold text-xs text-emerald-950 flex items-center gap-1.5";
-                    statusTitle.textContent = `Twilio Emergency SMS Queued to ${phoneToSend}`;
+                    statusTitle.textContent = `Fast2SMS Emergency Alert Dispatched to ${phoneToSend}`;
                 }
                 if (statusIcon) {
                     statusIcon.setAttribute("data-lucide", "check-circle-2");
@@ -1675,21 +1675,21 @@
                 }
                 if (statusDetails) {
                     statusDetails.textContent = 
-                        `[SMS STATUS]   : queued / delivered\n` +
-                        `[TWILIO SID]    : ${msgSid}\n` +
+                        `[SMS STATUS]   : delivered / queued\n` +
+                        `[GATEWAY SID]   : ${msgSid}\n` +
                         `[RECIPIENT]     : ${phoneToSend} (${district})\n` +
-                        `[CALLER ID]     : +1 (737) 250-8034\n` +
+                        `[GATEWAY]       : Fast2SMS Quick Transactional Route\n` +
                         `[SMS PAYLOAD]   : "${smsPayloadBody}"`;
                 }
 
             } catch (err) {
-                console.error("Twilio SMS send error:", err);
+                console.error("Fast2SMS send error:", err);
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
                 }
                 if (statusTitle) {
                     statusTitle.className = "font-bold text-xs text-red-950";
-                    statusTitle.textContent = "Twilio SMS Dispatch Error";
+                    statusTitle.textContent = "Fast2SMS Dispatch Error";
                 }
                 if (statusIcon) {
                     statusIcon.setAttribute("data-lucide", "alert-circle");
@@ -1699,7 +1699,7 @@
                     statusDetails.textContent = 
                         `[GATEWAY ERROR] : ${err.message}\n` +
                         `[TARGET PHONE]  : ${phoneToSend}\n` +
-                        `[RESOLUTION]    : Check Twilio Account SID, Auth Token & phone formatting.`;
+                        `[RESOLUTION]    : Check FAST2SMS_API_KEY & recipient phone number.`;
                 }
             } finally {
                 if (testBtn) testBtn.disabled = false;
