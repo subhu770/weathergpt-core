@@ -128,32 +128,6 @@
 
             <!-- Right Telemetry, Alerts & Official Clock -->
             <div class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
-                
-                <!-- Twilio Voice IVR Live Emergency Alert Call Button -->
-                <button 
-                    id="headerIvrCallBtn" 
-                    onclick="triggerIvrEmergencyCall()" 
-                    class="px-3.5 py-1.5 rounded bg-red-700 hover:bg-red-800 active:bg-red-900 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm border border-red-800 animate-pulse"
-                    title="Initiate Real-Time PSTN Twilio Voice Emergency Call to Registered Target Phone (+917735529862)"
-                    aria-label="Call Emergency Alert (IVR)"
-                >
-                    <i data-lucide="phone-call" class="w-3.5 h-3.5 text-amber-300"></i>
-                    <span id="headerIvrBtnText">📞 Call Emergency Alert (IVR)</span>
-                </button>
-
-                <!-- Citizen Telecom SMS & Voice IVR Alert Button -->
-                <button 
-                    id="telecomModalOpenBtn" 
-                    onclick="openTelecomModal()" 
-                    class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm border border-slate-700"
-                    title="Register Mobile Phone for SMS & Automated Voice IVR Alerts (Keypad & Feature Phone Support)"
-                    aria-label="Register Phone for Alerts (SMS & IVR)"
-                >
-                    <i data-lucide="smartphone" class="w-3.5 h-3.5 text-sky-400"></i>
-                    <span id="telecomBtnText">📱 Telecom Alerts (SMS & IVR)</span>
-                </button>
-
-
                 <!-- Web Push Weather Alerts Toggle Button -->
                 <button 
                     id="notificationToggleBtn" 
@@ -917,7 +891,6 @@
             initBrowserSpeechRecognition();
             await registerServiceWorker();
             updateNotificationButtonUI();
-            updateTelecomButtonUI();
             initAutoGeolocationOnLoad();
         });
 
@@ -1200,18 +1173,6 @@
             return document.getElementById("channelVoice") || document.getElementById("ivr-checkbox") || document.querySelector("input[name='ivr-checkbox']");
         }
 
-        function updateTelecomButtonUI() {
-            const savedPhone = localStorage.getItem('weathergpt_telecom_phone');
-            const isSubscribed = localStorage.getItem('weathergpt_telecom_subscribed') === 'true';
-            const btnText = document.getElementById("telecomBtnText");
-            if (btnText && savedPhone && isSubscribed) {
-                const masked = savedPhone.length >= 10 
-                    ? `+91 ${savedPhone.slice(0, 2)}•••••${savedPhone.slice(-3)}`
-                    : savedPhone;
-                btnText.textContent = `📱 Subscribed (${masked})`;
-            }
-        }
-
         function openTelecomModal() {
             const modal = document.getElementById("telecomModal");
             const districtLabel = document.getElementById("telecomModalDistrict");
@@ -1335,7 +1296,6 @@
             } else {
                 await sendTwilioEmergencySms(e, formattedPhone);
             }
-            updateTelecomButtonUI();
         }
 
         async function sendTelecomTestBroadcast(e) {
@@ -1412,7 +1372,6 @@
             const modalBtn = document.getElementById("modalIvrCallBtn");
             const testBtn = document.getElementById("telecomTestBtn");
             const submitBtn = document.getElementById("telecomSubmitBtn");
-            const headerBtn = document.getElementById("headerIvrCallBtn");
 
             if (multiBtn) {
                 multiBtn.disabled = true;
@@ -1422,7 +1381,6 @@
             if (modalBtn) modalBtn.disabled = true;
             if (testBtn) testBtn.disabled = true;
             if (submitBtn) submitBtn.disabled = true;
-            if (headerBtn) headerBtn.disabled = true;
 
             openTelecomModal();
             const statusBox = document.getElementById("telecomStatusBox");
@@ -1569,7 +1527,6 @@
             if (modalBtn) modalBtn.disabled = false;
             if (testBtn) testBtn.disabled = false;
             if (submitBtn) submitBtn.disabled = false;
-            if (headerBtn) headerBtn.disabled = false;
             lucide.createIcons();
         }
 
@@ -1737,17 +1694,9 @@
             const district = currentLocation || "Khordha";
             const lang = currentLanguage || "en";
 
-            const headerBtn = document.getElementById("headerIvrCallBtn");
-            const headerBtnText = document.getElementById("headerIvrBtnText");
             const modalBtn = document.getElementById("modalIvrCallBtn");
             const modalBtnText = document.getElementById("modalIvrBtnText");
             const testBtn = document.getElementById("telecomTestBtn");
-
-            if (headerBtn) {
-                headerBtn.disabled = true;
-                headerBtn.classList.replace("bg-red-700", "bg-red-900");
-            }
-            if (headerBtnText) headerBtnText.textContent = "Connecting Twilio...";
 
             if (modalBtn) {
                 modalBtn.disabled = true;
@@ -1851,12 +1800,6 @@
                         `[RESOLUTION]    : Check Twilio Account SID, Auth Token & PSTN permissions.`;
                 }
             } finally {
-                if (headerBtn) {
-                    headerBtn.disabled = false;
-                    headerBtn.classList.replace("bg-red-900", "bg-red-700");
-                }
-                if (headerBtnText) headerBtnText.textContent = "📞 Call Emergency Alert (IVR)";
-
                 if (modalBtn) {
                     modalBtn.disabled = false;
                     modalBtn.classList.replace("bg-red-900", "bg-red-700");
