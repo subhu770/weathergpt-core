@@ -98,38 +98,31 @@
 
     <!-- Official Government Header -->
     <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
-        <!-- National Portal Identity Bar -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <!-- National Portal Identity Bar (Compact Single-Row on Desktop) -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-row items-center justify-between gap-3">
             
-            <!-- Left Branding: Emblem & Department Titles -->
-            <div class="flex items-center space-x-3.5">
-                <!-- Official MoES / IMD Crest Badge -->
-                <div class="flex-shrink-0 w-12 h-12 bg-blue-900 rounded border border-blue-950 flex items-center justify-center text-white shadow-sm">
-                    <i data-lucide="cloud-sun" class="w-7 h-7 stroke-[1.75]"></i>
+            <!-- Left Branding: Emblem & Clean Department Title -->
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0 w-10 h-10 bg-blue-900 rounded-lg border border-blue-950 flex items-center justify-center text-white shadow-sm">
+                    <i data-lucide="cloud-sun" class="w-5 h-5 stroke-[2]"></i>
                 </div>
-
                 <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">Decision Support &amp; Disaster Advisory Prototype</span>
-                        <span class="text-slate-300">|</span>
-                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">IMD / NDMA Protocol Standard</span>
-                    </div>
-                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug">
                         WeatherGPT Decision Support System
                     </h1>
-                    <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-600">
-                        <span>WeatherGPT — Meteorological Advisory &amp; Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068)</span>
+                    <div class="text-xs text-slate-500 font-medium leading-none mt-0.5">
+                        IMD / NDMA Protocol Prototype | SIH26068
                     </div>
                 </div>
             </div>
 
-            <!-- Right Telemetry, Alerts & Official Clock -->
-            <div class="flex flex-wrap items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 text-right">
+            <!-- Right: Alert Toggle, Compact Live IST Clock & Refresh -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
                 <!-- Web Push Weather Alerts Toggle Button -->
                 <button 
                     id="notificationToggleBtn" 
                     onclick="toggleWeatherAlerts()" 
-                    class="px-3 py-1.5 rounded bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm border border-blue-950"
+                    class="px-3 py-1.5 rounded-lg bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm border border-blue-950"
                     title="Enable Daily Web Push Weather & IMD Hazard Alerts"
                     aria-label="Daily Weather Alerts"
                 >
@@ -138,20 +131,14 @@
                     <span id="notifActiveIndicator" class="hidden w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 </button>
 
-                <div class="flex flex-col items-start md:items-end">
-                    <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                        IMD Live Telemetry Feed
-                    </div>
-                    <div class="text-xs font-mono font-bold text-slate-800" id="liveClockIst">
-                        IST: --:--:-- IST
-                    </div>
-                    <div class="text-[11px] font-mono text-slate-500" id="liveClockUtc">
-                        UTC: --:--:-- UTC
-                    </div>
+                <!-- Compact Live IST Clock Badge -->
+                <div class="hidden sm:flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-800" title="Live Indian Standard Time">
+                    <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                    <span id="liveClockIst">IST: --:--:-- IST</span>
+                    <span id="liveClockUtc" class="hidden"></span>
                 </div>
 
-                <button id="refreshBtn" onclick="fetchWeatherData()" class="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition border border-slate-300" title="Refresh Telemetry" aria-label="Refresh Observation">
+                <button id="refreshBtn" onclick="fetchWeatherData()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition border border-slate-300 shadow-sm" title="Refresh Telemetry" aria-label="Refresh Observation">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -350,346 +337,475 @@
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <!-- Surface Temperature -->
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Surface Temperature</span>
-                    <i data-lucide="thermometer" class="w-4 h-4 text-blue-800"></i>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Surface Temperature</span>
+                        <i data-lucide="thermometer" class="w-4 h-4 text-blue-800"></i>
+                    </div>
+                    <div class="flex items-baseline space-x-1.5">
+                        <span id="surface-temperature" class="text-3xl font-extrabold font-mono text-slate-900"><span id="surface-temp" data-temp><span id="tempValue">--</span></span></span>
+                        <span class="text-slate-600 font-semibold text-lg">°C</span>
+                    </div>
                 </div>
-                <div class="flex items-baseline space-x-1.5">
-                    <span id="surface-temperature" class="text-3xl font-extrabold font-mono text-slate-900"><span id="surface-temp" data-temp><span id="tempValue">--</span></span></span>
-                    <span class="text-slate-600 font-semibold text-lg">°C</span>
-                </div>
-                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span>Apparent (Heat Index): <strong id="apparentTempValue" class="font-mono text-slate-800">--°C</strong></span>
-                </div>
-                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                    <span>Sky Condition:</span>
-                    <span id="conditionTag" class="font-semibold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded text-[11px] border border-blue-200">Clear</span>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 mt-3 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[11px] font-medium">Apparent Temp</span>
+                        <strong id="apparentTempValue" class="font-mono text-slate-800 font-bold">--°C</strong>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-slate-500 block text-[11px] font-medium">Sky Condition</span>
+                        <span id="conditionTag" class="inline-block font-semibold text-blue-900 bg-blue-50 px-1.5 py-0.5 rounded text-[11px] border border-blue-200">Clear</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Wind Velocity & Direction -->
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Sustained Wind (10m)</span>
-                    <i data-lucide="wind" class="w-4 h-4 text-blue-800"></i>
+            <!-- Sustained Wind Velocity & Direction -->
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Sustained Wind (10m)</span>
+                        <i data-lucide="wind" class="w-4 h-4 text-blue-800"></i>
+                    </div>
+                    <div class="flex items-baseline space-x-1.5">
+                        <span id="wind-velocity" class="text-3xl font-extrabold font-mono text-slate-900"><span id="wind-speed" data-wind><span id="windSpeedValue">--</span></span></span>
+                        <span class="text-slate-600 font-semibold text-sm">km/h</span>
+                    </div>
                 </div>
-                <div class="flex items-baseline space-x-1.5">
-                    <span id="wind-velocity" class="text-3xl font-extrabold font-mono text-slate-900"><span id="wind-speed" data-wind><span id="windSpeedValue">--</span></span></span>
-                    <span class="text-slate-600 font-semibold text-sm">km/h</span>
-                </div>
-                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span>Peak Gusts: <strong id="windGustsValue" class="font-mono text-slate-800">-- km/h</strong></span>
-                </div>
-                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                    <span>Azimuth / Direction:</span>
-                    <span id="windDirValue" class="font-mono font-semibold text-slate-800">--°</span>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 mt-3 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[11px] font-medium">Peak Gusts</span>
+                        <strong id="windGustsValue" class="font-mono text-slate-800 font-bold">-- km/h</strong>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-slate-500 block text-[11px] font-medium">Azimuth / Direction</span>
+                        <span id="windDirValue" class="font-mono font-bold text-slate-800">--°</span>
+                    </div>
                 </div>
             </div>
 
             <!-- 24h Precipitation & Accumulation -->
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">24h Precipitation</span>
-                    <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-800"></i>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">24h Precipitation</span>
+                        <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-800"></i>
+                    </div>
+                    <div class="flex items-baseline space-x-1.5">
+                        <span id="precipValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                        <span class="text-slate-600 font-semibold text-sm">mm</span>
+                    </div>
                 </div>
-                <div class="flex items-baseline space-x-1.5">
-                    <span id="precipValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
-                    <span class="text-slate-600 font-semibold text-sm">mm</span>
-                </div>
-                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span>24h Total: <strong id="dailyRainValue" class="font-mono text-slate-800">-- mm</strong></span>
-                    <span>Hourly Rate: <strong id="currentRainRateValue" class="font-mono text-slate-800">-- mm/h</strong></span>
-                </div>
-                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                    <span>Rainfall Intensity:</span>
-                    <span id="rainIntensityTag" class="font-semibold text-slate-800 text-[11px]">Nil / Dry</span>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 mt-3 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[11px] font-medium">Hourly Rate</span>
+                        <strong id="currentRainRateValue" class="font-mono text-slate-800 font-bold">-- mm/h</strong>
+                        <span id="dailyRainValue" class="hidden">-- mm</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-slate-500 block text-[11px] font-medium">Rainfall Intensity</span>
+                        <span id="rainIntensityTag" class="font-bold text-slate-800 text-[11px] block truncate">Nil / Dry</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Relative Humidity & Zone Status -->
-            <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-                <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Relative Humidity</span>
-                    <i data-lucide="droplets" class="w-4 h-4 text-blue-800"></i>
-                </div>
-                <div class="flex items-baseline space-x-1.5">
-                    <span id="humidityValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
-                    <span class="text-slate-600 font-semibold text-lg">%</span>
-                </div>
-                <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span>Geographic Zone:</span>
-                    <span id="coastalTag" class="font-semibold text-slate-800 truncate max-w-[120px]">Inland Plains</span>
-                </div>
-                <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                    <span>Observatory Station:</span>
-                    <span id="stationCityState" class="font-medium text-slate-700 truncate max-w-[130px]">Bhubaneswar</span>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Two Operational Directive Panels (Agro-Meteorological & Marine/Fishermen) -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- Panel 1: Agro-Meteorological Advisory (Agromet) -->
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
-                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
-                    <div class="flex items-center space-x-2.5">
-                        <div class="p-1.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            <i data-lucide="sprout" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-sm">Agro-Meteorological Advisory (Agromet)</h3>
-                            <p class="text-xs text-slate-500">ICAR & IMD Agricultural Decision Support</p>
-                        </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Relative Humidity</span>
+                        <i data-lucide="droplets" class="w-4 h-4 text-blue-800"></i>
                     </div>
-                    <span id="agroSprayBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        OPTIMAL
-                    </span>
-                </div>
-
-                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
-                    <!-- Spraying Protocol -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="spray-can" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Pesticide & Foliar Spraying Protocol
-                        </div>
-                        <p id="agroSprayDesc" class="text-slate-700 leading-relaxed">
-                            Loading agricultural parameters...
-                        </p>
-                    </div>
-
-                    <!-- Irrigation Directive -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="waves" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Irrigation & Soil Moisture Management
-                        </div>
-                        <p id="agroIrrigationDesc" class="text-slate-700 leading-relaxed">
-                            Loading irrigation advisory...
-                        </p>
-                    </div>
-
-                    <!-- Harvesting & Storage Directive -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="wheat" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Crop Harvesting & Post-Harvest Storage
-                        </div>
-                        <p id="agroHarvestDesc" class="text-slate-700 leading-relaxed">
-                            Loading harvest instructions...
-                        </p>
+                    <div class="flex items-baseline space-x-1.5">
+                        <span id="humidityValue" class="text-3xl font-extrabold font-mono text-slate-900">--</span>
+                        <span class="text-slate-600 font-semibold text-lg">%</span>
                     </div>
                 </div>
-
-                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
-                    <span>Protocol: <strong>Gramin Krishi Mausam Sewa (GKMS)</strong></span>
-                    <span class="text-emerald-700 font-semibold">ICAR / IMD Certified</span>
-                </div>
-            </div>
-
-            <!-- Panel 2 (Coastal): Marine & Coastal Fishermen Directive -->
-            <div id="marineCard" class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
-                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
-                    <div class="flex items-center space-x-2.5">
-                        <div class="p-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
-                            <i data-lucide="anchor" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-sm">Marine &amp; Fishermen Coastal Directive</h3>
-                            <p class="text-xs text-slate-500">INCOIS &amp; IMD Coastal Safety Protocols</p>
-                        </div>
-                    </div>
-                    <span id="coastalVentureBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        SAFE FOR SEA
-                    </span>
-                </div>
-
-                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
-                    <!-- Sea State & Squall Forecast -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="compass" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Sea State &amp; Coastal Squall Condition
-                        </div>
-                        <p id="coastalSeaState" class="text-slate-700 leading-relaxed">
-                            Loading maritime observations...
-                        </p>
-                    </div>
-
-                    <!-- Venturing Directive -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Deep-Sea &amp; Artisanal Venturing Clearance
-                        </div>
-                        <p id="coastalDirective" class="text-slate-700 leading-relaxed">
-                            Loading fishermen safety guidelines...
-                        </p>
-                    </div>
-
-                    <!-- Coastal Zone Status -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
-                        <div>
-                            <span class="text-slate-500">Classification:</span>
-                            <strong id="coastalFlagText" class="text-slate-800 ml-1">Coastal Marine Belt</strong>
-                        </div>
-                        <div>
-                            <span class="text-slate-500">Maritime Authority:</span>
-                            <strong class="text-blue-900 ml-1">IMD / INCOIS Ocean Services</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
-                    <span>Maritime Protocol: <strong>Bay of Bengal / Arabian Sea Matrix</strong></span>
-                    <span class="text-blue-900 font-semibold">Port &amp; Coast Guard Clearance</span>
-                </div>
-            </div>
-
-            <!-- Panel 2 (Inland Alternative): Urban & Surface Transport / Infrastructure Advisory -->
-            <div id="urbanCard" class="hidden bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
-                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
-                    <div class="flex items-center space-x-2.5">
-                        <div class="p-1.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200">
-                            <i data-lucide="building-2" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-slate-900 text-sm">Urban &amp; Surface Transport / Infrastructure Advisory</h3>
-                            <p class="text-xs text-slate-500">NDMA &amp; MoRTH Civil Protection Protocols</p>
-                        </div>
-                    </div>
-                    <span id="urbanStatusBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        NORMAL TRANSIT
-                    </span>
-                </div>
-
-                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
-                    <!-- Road Visibility & Transit Precaution -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="car" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Road Visibility &amp; Surface Traffic Precautions
-                        </div>
-                        <p id="urbanVisibilityDesc" class="text-slate-700 leading-relaxed">
-                            Loading transport guidelines...
-                        </p>
-                    </div>
-
-                    <!-- Waterlogging & Underpass Drainage -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="droplet-off" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Waterlogging &amp; Low-Lying Underpass Drainage
-                        </div>
-                        <p id="urbanWaterloggingDesc" class="text-slate-700 leading-relaxed">
-                            Loading urban drainage status...
-                        </p>
-                    </div>
-
-                    <!-- Power-Line, Overhead Cables & Wind Safety -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Power-Line, Overhead Cables &amp; Wind Safety
-                        </div>
-                        <p id="urbanWindSafetyDesc" class="text-slate-700 leading-relaxed">
-                            Loading infrastructure safety advice...
-                        </p>
-                    </div>
-
-                    <!-- Heat-Stress & Public Transit Precautions -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
-                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                            <i data-lucide="thermometer-sun" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Heat-Stress &amp; Public Transit Precautions
-                        </div>
-                        <p id="urbanHeatStressDesc" class="text-slate-700 leading-relaxed">
-                            Loading public health precautions...
-                        </p>
-                    </div>
-
-                    <!-- Inland Geographic Classification Status -->
-                    <div class="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
-                        <div>
-                            <span class="text-slate-500">Classification:</span>
-                            <strong id="urbanZoneText" class="text-slate-800 ml-1">Landlocked / Inland District</strong>
-                        </div>
-                        <div>
-                            <span class="text-slate-500">Civil Authority:</span>
-                            <strong class="text-indigo-900 ml-1">NDMA / State Disaster Management</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
-                    <span>Infrastructure Protocol: <strong>Urban Disaster &amp; Surface Transit Matrix</strong></span>
-                    <span class="text-indigo-900 font-semibold">Municipal &amp; Civil Defense Cleared</span>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Synthesized Official Meteorological Bulletin with Text-To-Speech (TTS) -->
-        <section class="bg-white border border-slate-200 rounded-lg shadow-sm p-4 sm:p-5">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-                <div class="flex items-center space-x-3">
-                    <div class="p-2 rounded bg-slate-100 text-slate-800 border border-slate-300">
-                        <i data-lucide="file-check-2" class="w-5 h-5"></i>
-                    </div>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 mt-3 text-xs">
                     <div>
-                        <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                            Synthesized Meteorological Bulletin
-                            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
-                                Ground Truth
-                            </span>
-                        </h3>
-                        <p class="text-xs text-slate-500" id="timestampText">Synchronizing latest official meteorological bulletin...</p>
+                        <span class="text-slate-500 block text-[11px] font-medium">Geographic Zone</span>
+                        <span id="coastalTag" class="font-bold text-slate-800 truncate block">Inland Plains</span>
                     </div>
-                </div>
-
-                <!-- Web Speech API Audio Controls -->
-                <div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded border border-slate-200 self-start sm:self-center">
-                    <!-- Audio Wave Indicator -->
-                    <div id="audioWave" class="hidden items-center space-x-1 px-2 h-6">
-                        <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-1"></div>
-                        <div class="w-1 bg-blue-700 rounded-full audio-wave-bar awb-2"></div>
-                        <div class="w-1 bg-blue-600 rounded-full audio-wave-bar awb-3"></div>
-                        <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-4"></div>
+                    <div class="text-right">
+                        <span class="text-slate-500 block text-[11px] font-medium">Observatory Station</span>
+                        <span id="stationCityState" class="font-medium text-slate-700 truncate block">Bhubaneswar</span>
                     </div>
-
-                    <!-- TTS Action Buttons -->
-                    <button id="ttsPlayBtn" onclick="speakAdvisory()" class="px-3 py-1.5 rounded bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm">
-                        <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
-                        <span id="ttsBtnText">Play Audio Bulletin</span>
-                    </button>
-                    <button id="ttsPauseBtn" onclick="togglePauseTTS()" class="hidden p-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition" title="Pause / Resume" aria-label="Pause or Resume Audio">
-                        <i id="ttsPauseIcon" data-lucide="pause" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button id="ttsStopBtn" onclick="stopTTS()" class="hidden p-1.5 rounded bg-white hover:bg-red-50 text-red-700 hover:text-red-800 border border-slate-300 transition" title="Stop Audio" aria-label="Stop Audio">
-                        <i data-lucide="square" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button onclick="copyBulletinText()" class="p-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition" title="Copy Bulletin to Clipboard" aria-label="Copy Bulletin">
-                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                    </button>
                 </div>
             </div>
 
-            <!-- Monospace Official Bulletin Display -->
-            <div class="mt-4">
-                <div class="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-line select-text border border-slate-800" id="conversationalBox">
-                    Connecting to IMD Meteorological Engine... Fetching official observations...
+        </section>
+
+        <!-- Interactive Operational Dashboard Tab Container -->
+        <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <!-- Tab Navigation Header -->
+            <div class="border-b border-slate-200 bg-slate-50/80 px-4 pt-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex space-x-1 sm:space-x-3" role="tablist">
+                    <button 
+                        id="tabBtnSector" 
+                        onclick="switchDashboardTab('sector')" 
+                        class="pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-blue-900 text-blue-900 flex items-center gap-2 transition"
+                        role="tab"
+                        aria-selected="true"
+                    >
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                        <span>Sector Advisories</span>
+                    </button>
+                    <button 
+                        id="tabBtnBulletin" 
+                        onclick="switchDashboardTab('bulletin')" 
+                        class="pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition"
+                        role="tab"
+                        aria-selected="false"
+                    >
+                        <i data-lucide="file-check-2" class="w-4 h-4"></i>
+                        <span>Official Synthesized Bulletin &amp; Audio</span>
+                    </button>
+                    <button 
+                        id="tabBtnLogs" 
+                        onclick="switchDashboardTab('logs')" 
+                        class="pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition"
+                        role="tab"
+                        aria-selected="false"
+                    >
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                        <span>Alert Dispatch Logs</span>
+                        <span id="alertLogsCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-blue-100 text-blue-800 font-bold">1</span>
+                    </button>
+                </div>
+
+                <div class="pb-2.5 hidden sm:flex items-center gap-2 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-1 font-medium">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>IMD / NDMA Multi-Sector Matrix</span>
+                    </span>
                 </div>
             </div>
 
-            <!-- Authority Attribution Footer -->
-            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
-                <span id="attributionSource">Data Authority: Ministry of Earth Sciences (MoES) / IMD Deterministic Rule Engine / Open-Meteo High-Resolution Grid</span>
-                <span id="speechAttribution" class="font-medium text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                    Audio Engine: Bhashini Indic Speech-to-Speech (ASR & TTS)
-                </span>
+            <!-- Tab Panels Body -->
+            <div class="p-4 sm:p-5">
+                
+                <!-- Tab Panel 1: Sector Advisories (Agro-Meteorological & Marine/Urban) -->
+                <div id="tabPanelSector" class="block">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        
+                        <!-- Panel 1: Agro-Meteorological Advisory (Agromet) -->
+                        <div class="bg-slate-50/50 border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                            <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between rounded-t-lg">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-1.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                        <i data-lucide="sprout" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-sm">Agro-Meteorological Advisory (Agromet)</h3>
+                                        <p class="text-xs text-slate-500">ICAR &amp; IMD Agricultural Decision Support</p>
+                                    </div>
+                                </div>
+                                <span id="agroSprayBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    OPTIMAL
+                                </span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                                <!-- Spraying Protocol -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="spray-can" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Pesticide &amp; Foliar Spraying Protocol
+                                    </div>
+                                    <p id="agroSprayDesc" class="text-slate-700 leading-relaxed">
+                                        Loading agricultural parameters...
+                                    </p>
+                                </div>
+
+                                <!-- Irrigation Directive -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="waves" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Irrigation &amp; Soil Moisture Management
+                                    </div>
+                                    <p id="agroIrrigationDesc" class="text-slate-700 leading-relaxed">
+                                        Loading irrigation advisory...
+                                    </p>
+                                </div>
+
+                                <!-- Harvesting & Storage Directive -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="wheat" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Crop Harvesting &amp; Post-Harvest Storage
+                                    </div>
+                                    <p id="agroHarvestDesc" class="text-slate-700 leading-relaxed">
+                                        Loading harvest instructions...
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                                <span>Protocol: <strong>Gramin Krishi Mausam Sewa (GKMS)</strong></span>
+                                <span class="text-emerald-700 font-semibold">ICAR / IMD Certified</span>
+                            </div>
+                        </div>
+
+                        <!-- Panel 2 (Coastal): Marine & Coastal Fishermen Directive -->
+                        <div id="marineCard" class="bg-slate-50/50 border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                            <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between rounded-t-lg">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
+                                        <i data-lucide="anchor" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-sm">Marine &amp; Fishermen Coastal Directive</h3>
+                                        <p class="text-xs text-slate-500">INCOIS &amp; IMD Coastal Safety Protocols</p>
+                                    </div>
+                                </div>
+                                <span id="coastalVentureBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    SAFE FOR SEA
+                                </span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                                <!-- Sea State & Squall Forecast -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="compass" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Sea State &amp; Coastal Squall Condition
+                                    </div>
+                                    <p id="coastalSeaState" class="text-slate-700 leading-relaxed">
+                                        Loading maritime observations...
+                                    </p>
+                                </div>
+
+                                <!-- Venturing Directive -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Deep-Sea &amp; Artisanal Venturing Clearance
+                                    </div>
+                                    <p id="coastalDirective" class="text-slate-700 leading-relaxed">
+                                        Loading fishermen safety guidelines...
+                                    </p>
+                                </div>
+
+                                <!-- Coastal Zone Status -->
+                                <div class="bg-white p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
+                                    <div>
+                                        <span class="text-slate-500">Classification:</span>
+                                        <strong id="coastalFlagText" class="text-slate-800 ml-1">Coastal Marine Belt</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-500">Maritime Authority:</span>
+                                        <strong class="text-blue-900 ml-1">IMD / INCOIS Ocean Services</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                                <span>Maritime Protocol: <strong>Bay of Bengal / Arabian Sea Matrix</strong></span>
+                                <span class="text-blue-900 font-semibold">Port &amp; Coast Guard Clearance</span>
+                            </div>
+                        </div>
+
+                        <!-- Panel 2 (Inland Alternative): Urban & Surface Transport / Infrastructure Advisory -->
+                        <div id="urbanCard" class="hidden bg-slate-50/50 border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                            <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between rounded-t-lg">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="p-1.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200">
+                                        <i data-lucide="building-2" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-sm">Urban &amp; Surface Transport / Infrastructure Advisory</h3>
+                                        <p class="text-xs text-slate-500">NDMA &amp; MoRTH Civil Protection Protocols</p>
+                                    </div>
+                                </div>
+                                <span id="urbanStatusBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    NORMAL TRANSIT
+                                </span>
+                            </div>
+
+                            <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                                <!-- Road Visibility & Transit Precaution -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="car" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Road Visibility &amp; Surface Traffic Precautions
+                                    </div>
+                                    <p id="urbanVisibilityDesc" class="text-slate-700 leading-relaxed">
+                                        Loading transport guidelines...
+                                    </p>
+                                </div>
+
+                                <!-- Waterlogging & Underpass Drainage -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="droplet-off" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Waterlogging &amp; Low-Lying Underpass Drainage
+                                    </div>
+                                    <p id="urbanWaterloggingDesc" class="text-slate-700 leading-relaxed">
+                                        Loading urban drainage status...
+                                    </p>
+                                </div>
+
+                                <!-- Power-Line, Overhead Cables & Wind Safety -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Power-Line, Overhead Cables &amp; Wind Safety
+                                    </div>
+                                    <p id="urbanWindSafetyDesc" class="text-slate-700 leading-relaxed">
+                                        Loading infrastructure safety advice...
+                                    </p>
+                                </div>
+
+                                <!-- Heat-Stress & Public Transit Precautions -->
+                                <div class="bg-white p-3 rounded border border-slate-200 shadow-2xs">
+                                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                                        <i data-lucide="thermometer-sun" class="w-3.5 h-3.5 text-blue-800"></i>
+                                        Heat-Stress &amp; Public Transit Precautions
+                                    </div>
+                                    <p id="urbanHeatStressDesc" class="text-slate-700 leading-relaxed">
+                                        Loading public health precautions...
+                                    </p>
+                                </div>
+
+                                <!-- Inland Geographic Classification Status -->
+                                <div class="bg-white p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
+                                    <div>
+                                        <span class="text-slate-500">Classification:</span>
+                                        <strong id="urbanZoneText" class="text-slate-800 ml-1">Landlocked / Inland District</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-500">Civil Authority:</span>
+                                        <strong class="text-indigo-900 ml-1">NDMA / State Disaster Management</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                                <span>Infrastructure Protocol: <strong>Urban Disaster &amp; Surface Transit Matrix</strong></span>
+                                <span class="text-indigo-900 font-semibold">Municipal &amp; Civil Defense Cleared</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab Panel 2: Official Synthesized Bulletin & Audio -->
+                <div id="tabPanelBulletin" class="hidden space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 rounded-lg bg-slate-100 text-slate-800 border border-slate-300">
+                                <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                                    Synthesized Meteorological Bulletin
+                                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300">
+                                        Ground Truth
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-slate-500" id="timestampText">Synchronizing latest official meteorological bulletin...</p>
+                            </div>
+                        </div>
+
+                        <!-- Web Speech API Audio & Action Controls -->
+                        <div class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 self-start sm:self-center">
+                            <!-- Audio Wave Indicator -->
+                            <div id="audioWave" class="hidden items-center space-x-1 px-2 h-6">
+                                <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-1"></div>
+                                <div class="w-1 bg-blue-700 rounded-full audio-wave-bar awb-2"></div>
+                                <div class="w-1 bg-blue-600 rounded-full audio-wave-bar awb-3"></div>
+                                <div class="w-1 bg-blue-800 rounded-full audio-wave-bar awb-4"></div>
+                            </div>
+
+                            <!-- TTS Action Buttons -->
+                            <button id="ttsPlayBtn" onclick="speakAdvisory()" class="px-3 py-1.5 rounded bg-[#1e3a8a] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm">
+                                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                                <span id="ttsBtnText">Play Audio Bulletin</span>
+                            </button>
+                            <button id="ttsPauseBtn" onclick="togglePauseTTS()" class="hidden p-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition" title="Pause / Resume" aria-label="Pause or Resume Audio">
+                                <i id="ttsPauseIcon" data-lucide="pause" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button id="ttsStopBtn" onclick="stopTTS()" class="hidden p-1.5 rounded bg-white hover:bg-red-50 text-red-700 hover:text-red-800 border border-slate-300 transition" title="Stop Audio" aria-label="Stop Audio">
+                                <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="copyBulletinText()" class="px-3 py-1.5 rounded bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Copy Bulletin to Clipboard" aria-label="Copy Bulletin">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                <span>Copy Bulletin</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Monospace Official Bulletin Display -->
+                    <div class="mt-2">
+                        <div class="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded-lg font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-line select-text border border-slate-800 shadow-inner" id="conversationalBox">
+                            Connecting to IMD Meteorological Engine... Fetching official observations...
+                        </div>
+                    </div>
+
+                    <!-- Authority Attribution Footer -->
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                        <span id="attributionSource">Data Authority: Ministry of Earth Sciences (MoES) / IMD Deterministic Rule Engine / Open-Meteo High-Resolution Grid</span>
+                        <span id="speechAttribution" class="font-medium text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            Audio Engine: Bhashini Indic Speech-to-Speech (ASR &amp; TTS)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Tab Panel 3: Alert Dispatch Logs -->
+                <div id="tabPanelLogs" class="hidden space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 rounded-lg bg-blue-50 text-blue-900 border border-blue-200">
+                                <i data-lucide="history" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                                    Alert Dispatch &amp; Telecom Audit Logs
+                                    <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">
+                                        Session Active
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-slate-500">History of SMS, IVR voice calls, and browser alerts dispatched in this session.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button 
+                                onclick="dispatchMultichannelAlert()" 
+                                class="px-3 py-1.5 rounded-lg bg-[#1e3a8a] hover:bg-blue-900 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm"
+                            >
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                <span>Dispatch Test Alert</span>
+                            </button>
+                            <button 
+                                onclick="clearAlertLogs()" 
+                                class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold text-xs flex items-center gap-1.5 transition"
+                            >
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>Clear Logs</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Clean Log History Table -->
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg shadow-sm">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                                <tr>
+                                    <th class="px-4 py-3">Timestamp</th>
+                                    <th class="px-4 py-3">District</th>
+                                    <th class="px-4 py-3">Alert Level</th>
+                                    <th class="px-4 py-3">Channel</th>
+                                    <th class="px-4 py-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertLogsTableBody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Populated dynamically by renderAlertLogsTable() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -971,6 +1087,7 @@
             await registerServiceWorker();
             updateNotificationButtonUI();
             initAutoGeolocationOnLoad();
+            renderAlertLogsTable();
         });
 
         // Register Service Worker for Web Push & PWA Notifications
@@ -1053,6 +1170,113 @@
             }).catch(err => {
                 console.warn("Clipboard copy failed:", err);
             });
+        }
+
+        // =========================================================================
+        // DASHBOARD TAB CONTROLLER & ALERT DISPATCH AUDIT LOG SYSTEM
+        // =========================================================================
+        function switchDashboardTab(tabName) {
+            const tabs = ['sector', 'bulletin', 'logs'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                const panel = document.getElementById(`tabPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                if (t === tabName) {
+                    if (btn) {
+                        btn.className = "pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-blue-900 text-blue-900 flex items-center gap-2 transition";
+                        btn.setAttribute("aria-selected", "true");
+                    }
+                    if (panel) panel.classList.remove("hidden");
+                } else {
+                    if (btn) {
+                        btn.className = "pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition";
+                        btn.setAttribute("aria-selected", "false");
+                    }
+                    if (panel) panel.classList.add("hidden");
+                }
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Alert Dispatch Session Audit Logs
+        let alertDispatchLogs = [
+            {
+                timestamp: new Date().toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Kolkata' }) + ' IST',
+                district: "Khordha, Odisha",
+                alertLevel: "GREEN",
+                channel: "Twilio IVR + SMS Notification",
+                status: "STANDBY / READY"
+            }
+        ];
+
+        function renderAlertLogsTable() {
+            const tbody = document.getElementById("alertLogsTableBody");
+            const badge = document.getElementById("alertLogsCountBadge");
+            if (!tbody) return;
+            
+            if (badge) badge.textContent = alertDispatchLogs.length;
+
+            if (alertDispatchLogs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+                            <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                            <p class="font-medium text-slate-600">No alerts dispatched in this session yet.</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Dispatched SMS, IVR voice calls, and browser notifications will appear here.</p>
+                        </td>
+                    </tr>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = alertDispatchLogs.map(log => {
+                let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+                if (log.alertLevel === "RED") badgeClass = "bg-red-100 text-red-800 border-red-300";
+                else if (log.alertLevel === "ORANGE") badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
+                else if (log.alertLevel === "YELLOW") badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+
+                let statusClass = "text-emerald-700 bg-emerald-50 border-emerald-200";
+                if (log.status.includes("FAILED")) statusClass = "text-red-700 bg-red-50 border-red-200";
+                else if (log.status.includes("STANDBY") || log.status.includes("DISPATCHING")) statusClass = "text-blue-700 bg-blue-50 border-blue-200";
+
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="px-4 py-3 font-mono text-xs font-semibold text-slate-800 whitespace-nowrap">${log.timestamp}</td>
+                        <td class="px-4 py-3 font-medium text-slate-900">${log.district}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${badgeClass}">
+                                ${log.alertLevel}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-xs text-slate-700 font-medium">${log.channel}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-medium border ${statusClass}">
+                                ${log.status}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function logAlertDispatch(district, alertLevel, channel, status) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Kolkata' }) + ' IST';
+            alertDispatchLogs.unshift({
+                timestamp: timeStr,
+                district: district || currentLocation || "Target District",
+                alertLevel: alertLevel || (document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || "ALERT"),
+                channel: channel || "IVR Voice + SMS",
+                status: status || "DISPATCHED"
+            });
+            renderAlertLogsTable();
+        }
+
+        function clearAlertLogs() {
+            alertDispatchLogs = [];
+            renderAlertLogsTable();
         }
 
         // =========================================================================
@@ -1619,6 +1843,13 @@
                 startSosPolling();
             }
 
+            const currentAlertBadge = document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || liveHazard;
+            if (isIvrSuccess || isSmsSuccess) {
+                logAlertDispatch(district, currentAlertBadge, "Twilio IVR + Fast2SMS + Push", "DELIVERED (ACTIVE)");
+            } else {
+                logAlertDispatch(district, currentAlertBadge, "Twilio IVR + Fast2SMS + Push", "FAILED");
+            }
+
             // Re-enable buttons
             if (multiBtn) {
                 multiBtn.disabled = false;
@@ -1748,7 +1979,9 @@
                         `[GATEWAY]       : Fast2SMS Quick Transactional Route`;
                 }
 
+                logAlertDispatch(district, (document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || liveHazard), "Fast2SMS Quick Alert", "DELIVERED / QUEUED");
             } catch (err) {
+                logAlertDispatch(district, (document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || liveHazard), "Fast2SMS Quick Alert", "GATEWAY ERROR");
                 console.error("Fast2SMS send error:", err);
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
@@ -1888,7 +2121,9 @@
                 // Start checking for SOS rescue events
                 startSosPolling();
 
+                logAlertDispatch(district, (document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || "ALERT"), "Twilio Voice IVR", "CALL INITIATED");
             } catch (err) {
+                logAlertDispatch(district, (document.getElementById("alertBadge")?.innerText?.trim()?.split(" ")?.[0] || "ALERT"), "Twilio Voice IVR", "CALL FAILED");
                 console.error("Twilio IVR Call error:", err);
                 if (statusBox) {
                     statusBox.className = "mt-3 p-3.5 rounded-lg border border-red-300 bg-red-50 text-xs leading-relaxed space-y-2 block";
