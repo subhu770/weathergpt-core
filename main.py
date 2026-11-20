@@ -755,7 +755,9 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
         wind_speed=telemetry["wind_speed_kmh"],
         wind_gusts=telemetry["wind_gusts_kmh"],
         precipitation=telemetry["precipitation_mm"],
-        is_coastal=location_data["is_coastal"]
+        is_coastal=location_data["is_coastal"],
+        alert_level=hazard_info["level"],
+        daily_rain=telemetry["daily_rain_total_mm"]
     )
 
     # 5b. Urban & Surface Transport / Infrastructure Advisory (Inland & Continental Districts)

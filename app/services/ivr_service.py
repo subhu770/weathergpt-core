@@ -545,7 +545,9 @@ class TwilioIVRService:
                         wind_speed=weather_data.get("wind_speed_kmh", 18.0),
                         wind_gusts=weather_data.get("wind_gusts_kmh", 22.0),
                         precipitation=weather_data.get("precipitation_mm", 12.0),
-                        is_coastal=True
+                        is_coastal=True,
+                        alert_level=hazard_data["level"] if hazard_data else "GREEN",
+                        daily_rain=weather_data.get("daily_rain_total_mm", 12.0)
                     )
             except Exception as e:
                 logger.warning(f"Telemetry/Advisory compute error in action TwiML: {e}")

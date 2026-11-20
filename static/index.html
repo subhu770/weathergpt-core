@@ -927,7 +927,7 @@
                 </div>
 
                 <div class="text-slate-400 text-[11px] text-center md:text-right">
-                    Under the mandate of <strong>Ministry of Earth Sciences (MoES)</strong> & <strong>National Disaster Management Authority (NDMA)</strong>
+                    Aligned with MoES &amp; NDMA Meteorological Advisory Frameworks (Academic Prototype).
                 </div>
             </div>
 
@@ -2384,18 +2384,36 @@
             }
 
             // 3. Agro-Meteorological Advisory (Agromet)
+            const rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+            const isWetCanopy = (
+                telemetry.precipitation_mm > 0.0 ||
+                rain24h > 0.0 ||
+                rainCodes.includes(telemetry.weather_code) ||
+                telemetry.humidity_percent > 85
+            );
+
+            let sprayDescEn = agro.spraying_desc_en;
+            let sprayDescHi = agro.spraying_desc_hi;
+            let sprayStatus = agro.spraying_status;
+
+            if (isWetCanopy) {
+                sprayStatus = "UNSAFE";
+                sprayDescEn = "AVOID SPRAYING: Active precipitation/drizzle and high humidity (wash-off risk); postpone foliar applications until dry spell.";
+                sprayDescHi = "छिड़काव से बचें: वर्षा/बूंदाबांदी और अत्यधिक नमी (दवा धुलने का ख़तरा); मौसम साफ़ और सूखा होने तक छिड़काव स्थगित रखें।";
+            }
+
             const sprayBadge = document.getElementById("agroSprayBadge");
-            sprayBadge.textContent = agro.spraying_status;
-            if (agro.spraying_status === "OPTIMAL") {
+            sprayBadge.textContent = sprayStatus;
+            if (sprayStatus === "OPTIMAL") {
                 sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
-            } else if (agro.spraying_status === "CAUTION") {
+            } else if (sprayStatus === "CAUTION") {
                 sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
             } else {
                 sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
             }
 
             document.getElementById("agroSprayDesc").textContent = 
-                lang === 'hi' ? agro.spraying_desc_hi : agro.spraying_desc_en;
+                lang === 'hi' ? sprayDescHi : sprayDescEn;
             document.getElementById("agroIrrigationDesc").textContent = 
                 lang === 'hi' ? agro.irrigation_hi : agro.irrigation_en;
 
@@ -2430,13 +2448,29 @@
                 if (marineCard) marineCard.classList.remove("hidden");
                 if (urbanCard) urbanCard.classList.add("hidden");
 
+                const alertLvl = (alert.level || "GREEN").toUpperCase();
+                let coastalStatus = coastal.status;
+                let coastalDirectiveEn = coastal.advisory_en;
+                let coastalDirectiveHi = coastal.advisory_hi;
+
+                // Enforce Master Alert Override on Marine & Fishermen Directive
+                if (alertLvl === "RED" || alertLvl === "ORANGE") {
+                    coastalStatus = alertLvl === "RED" ? "CRITICAL HAZARD" : "WARNING";
+                    coastalDirectiveEn = "SUSPEND FISHING & SEA OPERATIONS: Severe weather alert active; fishermen must not venture into sea and secure boats at harbor.";
+                    coastalDirectiveHi = "मत्स्य पालन एवं समुद्री गतिविधियाँ तत्काल स्थगित करें: गंभीर मौसम चेतावनी सक्रिय; मछुआरे समुद्र में न जाएँ और नौकाओं को बंदरगाह पर सुरक्षित बाँधें।";
+                } else if (alertLvl === "YELLOW" || rain24h > 10.0 || telemetry.precipitation_mm > 10.0) {
+                    if (coastalStatus === "SAFE") coastalStatus = "CAUTION";
+                    coastalDirectiveEn = "CAUTION ADVISED: Monitor squall updates and stay close to coastline.";
+                    coastalDirectiveHi = "सावधानी बरतने की सलाह: मौसम विभाग की चेतावनी पर नज़र रखें एवं तट के निकट ही रहें।";
+                }
+
                 const ventureBadge = document.getElementById("coastalVentureBadge");
-                ventureBadge.textContent = coastal.status;
-                if (coastal.status === "SAFE") {
+                ventureBadge.textContent = coastalStatus;
+                if (coastalStatus === "SAFE") {
                     ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
-                } else if (coastal.status === "CAUTION") {
+                } else if (coastalStatus === "CAUTION") {
                     ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
-                } else if (coastal.status === "WARNING") {
+                } else if (coastalStatus === "WARNING") {
                     ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300";
                 } else {
                     ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
@@ -2445,7 +2479,7 @@
                 document.getElementById("coastalSeaState").textContent = 
                     lang === 'hi' ? coastal.sea_state_hi : coastal.sea_state_en;
                 document.getElementById("coastalDirective").textContent = 
-                    lang === 'hi' ? coastal.advisory_hi : coastal.advisory_en;
+                    lang === 'hi' ? coastalDirectiveHi : coastalDirectiveEn;
                 document.getElementById("coastalFlagText").textContent = `Coastal Marine Belt (${data.state})`;
             } else {
                 if (marineCard) marineCard.classList.add("hidden");

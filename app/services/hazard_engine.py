@@ -153,21 +153,19 @@ def compute_agro_advisory(
     - Harvesting: Strictly avoid during adverse conditions (YELLOW/ORANGE/RED, Rain > 0 mm, Humidity > 80%)
     """
     # 1. Chemical Spraying Window Evaluation
-    if wind_speed > 15.0 and precipitation > 0.5:
+    is_rain_or_drizzle_code = weather_code in [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]
+    is_wet_condition = (precipitation > 0.0 or is_rain_or_drizzle_code or humidity > 85.0)
+
+    if is_wet_condition:
         spraying_status = "UNSAFE"
         spraying_color = "#ef4444"
-        spraying_desc_en = f"Unsafe Window (Sustained Wind: {wind_speed:.1f} km/h, Rain: {precipitation:.1f} mm) — High chemical drift and wash-off risk."
-        spraying_desc_hi = f"असुरक्षित (स्थिर पवन: {wind_speed:.1f} km/h, वर्षा: {precipitation:.1f} mm) — कीटनाशक बहने एवं बिखरने का भारी जोखिम।"
+        spraying_desc_en = "AVOID SPRAYING: Active precipitation/drizzle and high humidity (wash-off risk); postpone foliar applications until dry spell."
+        spraying_desc_hi = "छिड़काव से बचें: वर्षा/बूंदाबांदी और अत्यधिक नमी (दवा धुलने का ख़तरा); मौसम साफ़ और सूखा होने तक छिड़काव स्थगित रखें।"
     elif wind_speed > 15.0:
         spraying_status = "CAUTION"
         spraying_color = "#f59e0b"
         spraying_desc_en = f"Caution (Sustained Wind: {wind_speed:.1f} km/h > 15 km/h limit) — Spray drift risk; postpone foliar pesticide applications."
         spraying_desc_hi = f"सावधानी (स्थिर पवन: {wind_speed:.1f} km/h > 15 km/h) — कीटनाशक हवा में उड़ने का ख़तरा; छिड़काव स्थगित रखें।"
-    elif precipitation > 0.5:
-        spraying_status = "UNSAFE"
-        spraying_color = "#ef4444"
-        spraying_desc_en = f"Unsafe (Rain: {precipitation:.1f} mm) — Chemical wash-off risk; postpone all agrochemical spraying."
-        spraying_desc_hi = f"असुरक्षित (वर्षा: {precipitation:.1f} mm) — कीटनाशक धुलने का ख़तरा; सभी छिड़काव रोकें।"
     else:
         spraying_status = "OPTIMAL"
         spraying_color = "#10b981"
@@ -220,49 +218,56 @@ def compute_marine_advisory(
     wind_speed: float,
     wind_gusts: float,
     precipitation: float,
-    is_coastal: bool
+    is_coastal: bool,
+    alert_level: str = "GREEN",
+    daily_rain: float = 0.0
 ) -> Dict[str, Any]:
     """
     Marine & Fishermen Directive Engine (INCOIS / IMD Marine Protocols):
-    - Wind >= 62 km/h: Total Ban on Deep-Sea Venturing (Phenomenal/Very Rough Sea)
-    - Wind 45-61 km/h: Warning; Return to harbor immediately
-    - Wind 30-44 km/h: Caution for small artisanal craft
-    - Wind < 30 km/h: Safe for all maritime operations
+    - Alert ORANGE / RED: Force total suspension of fishing operations
+    - Alert YELLOW or 24h Rain > 10mm: Caution advised
+    - Wind >= 62 km/h: Critical hazard
+    - Wind 45-61 km/h: Warning; Return to harbor
+    - Wind 30-44 km/h: Caution for small craft
+    - Wind < 30 km/h: Safe for all maritime operations (only when GREEN and Rain <= 10mm)
     """
     max_wind = max(wind_speed, wind_gusts)
+    max_rain = max(precipitation, daily_rain)
+    alert_lvl = (alert_level or "GREEN").upper()
     wind_label_en = f"Sustained: {wind_speed:.1f} km/h, Peak Gusts: {wind_gusts:.1f} km/h"
     wind_label_hi = f"स्थिर पवन: {wind_speed:.1f} km/h, तेज झोंके: {wind_gusts:.1f} km/h"
 
-    if max_wind >= 62.0:
-        status = "CRITICAL HAZARD"
-        sea_state_en = f"Very Rough to Phenomenal Sea ({wind_label_en})"
-        sea_state_hi = f"अत्यंत अशांत एवं प्रचंड समुद्र ({wind_label_hi})"
-        color = "#ef4444"
+    # Master Alert & Precipitation Overrides
+    if alert_lvl in ["RED", "ORANGE"] or max_wind >= 45.0:
+        if alert_lvl == "RED" or max_wind >= 62.0:
+            status = "CRITICAL HAZARD"
+            color = "#ef4444"
+            sea_state_en = f"Very Rough to Phenomenal Sea ({wind_label_en})"
+            sea_state_hi = f"अत्यंत अशांत एवं प्रचंड समुद्र ({wind_label_hi})"
+        else:
+            status = "WARNING"
+            color = "#f97316"
+            sea_state_en = f"Rough to Very Rough Sea ({wind_label_en})"
+            sea_state_hi = f"अशांत समुद्र ({wind_label_hi})"
         venture_safe = False
-        advisory_en = "TOTAL BAN ON SEA VENTURING. Fishermen are strictly advised NOT to venture into deep sea or coastal waters. Secure all mechanized boats ashore."
-        advisory_hi = "समुद्र में जाने पर पूर्ण प्रतिबंध! मछुआरे गहरे समुद्र या तट के पास कतई न जाएँ। नावों को सुरक्षित स्थानों पर बाँधें।"
-    elif max_wind >= 45.0:
-        status = "WARNING"
-        sea_state_en = f"Rough to Very Rough Sea ({wind_label_en})"
-        sea_state_hi = f"अशांत समुद्र ({wind_label_hi})"
-        color = "#f97316"
-        venture_safe = False
-        advisory_en = "HIGH RISK. Fishermen in deep sea are advised to return to harbor immediately. Artisanal and non-mechanized craft operations suspended."
-        advisory_hi = "उच्च जोखिम। गहरे समुद्र में गए मछुआरे तत्काल तट पर लौट आएँ। छोटी नावों का परिचालन स्थगित रखें।"
-    elif max_wind >= 30.0:
+        advisory_en = "SUSPEND FISHING & SEA OPERATIONS: Severe weather alert active; fishermen must not venture into sea and secure boats at harbor."
+        advisory_hi = "मत्स्य पालन एवं समुद्री गतिविधियाँ तत्काल स्थगित करें: गंभीर मौसम चेतावनी सक्रिय; मछुआरे समुद्र में न जाएँ और नौकाओं को बंदरगाह पर सुरक्षित बाँधें।"
+
+    elif alert_lvl == "YELLOW" or max_wind >= 30.0 or max_rain > 10.0:
         status = "CAUTION"
-        sea_state_en = f"Moderate to Squally Conditions ({wind_label_en})"
-        sea_state_hi = f"मध्यम से तेज समुद्री हवाएँ ({wind_label_hi})"
         color = "#eab308"
         venture_safe = True
-        advisory_en = "EXERCISE CAUTION. Artisanal boat operators should stay close to coastline and avoid venturing into deep sea."
-        advisory_hi = "सतर्कता बरतें। छोटी नाव चालक गहरे समुद्र में जाने से बचें एवं तट के निकट ही रहें।"
+        sea_state_en = f"Moderate to Squally Conditions ({wind_label_en})"
+        sea_state_hi = f"मध्यम से तेज समुद्री हवाएँ ({wind_label_hi})"
+        advisory_en = "CAUTION ADVISED: Monitor squall updates and stay close to coastline."
+        advisory_hi = "सावधानी बरतने की सलाह: मौसम विभाग की चेतावनी पर नज़र रखें एवं तट के निकट ही रहें।"
+
     else:
         status = "SAFE"
-        sea_state_en = f"Smooth to Slight Sea ({wind_label_en})"
-        sea_state_hi = f"शांत एवं अनुकूल समुद्र ({wind_label_hi})"
         color = "#10b981"
         venture_safe = True
+        sea_state_en = f"Smooth to Slight Sea ({wind_label_en})"
+        sea_state_hi = f"शांत एवं अनुकूल समुद्र ({wind_label_hi})"
         advisory_en = "SAFE FOR FISHING. Sea conditions are calm and favorable for routine coastal and deep-sea operations."
         advisory_hi = "मत्स्य पालन हेतु सुरक्षित। समुद्र शांत है एवं सामान्य मछली पकड़ने के लिए स्थिति अनुकूल है।"
 
