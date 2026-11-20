@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMD Official Meteorological Decision Support & Early Warning Portal | MoES</title>
-    <meta name="description" content="Official Meteorological Advisory & Early-Warning Decision Support Portal. Ministry of Earth Sciences (MoES), India Meteorological Department (IMD) - SIH26068.">
+    <title>WeatherGPT — Meteorological Advisory & Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068)</title>
+    <meta name="description" content="WeatherGPT — Meteorological Advisory & Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068). Powered by Open-Meteo Telemetry.">
     
     <!-- Meteorological Hazard Weather Favicon & PWA Manifest -->
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -110,18 +110,15 @@
 
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">भारत सरकार | Government of India</span>
+                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">Decision Support &amp; Disaster Advisory Prototype</span>
                         <span class="text-slate-300">|</span>
-                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">पृथ्वी विज्ञान मंत्रालय | MoES</span>
+                        <span class="text-xs font-semibold tracking-wide uppercase text-slate-600">IMD / NDMA Protocol Standard</span>
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
-                        भारत मौसम विज्ञान विभाग / India Meteorological Department (IMD)
+                        WeatherGPT Decision Support System
                     </h1>
-                    <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                        <span>Meteorological Advisory & Early-Warning Decision Support System</span>
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-                            SIH26068
-                        </span>
+                    <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-600">
+                        <span>WeatherGPT — Meteorological Advisory &amp; Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068)</span>
                     </div>
                 </div>
             </div>
@@ -332,7 +329,7 @@
                 <div class="bg-white/85 border border-emerald-200 rounded p-3 text-right self-stretch md:self-auto flex-shrink-0 flex flex-col justify-between">
                     <div>
                         <div class="text-[11px] font-semibold uppercase text-slate-500">Threshold Trigger Telemetry</div>
-                        <div class="text-xs font-mono font-bold text-slate-800 mt-0.5" id="alertTriggers">Wind: -- km/h | Rain: -- mm</div>
+                        <div class="text-xs font-mono font-bold text-slate-800 mt-0.5" id="alertTriggers">Sustained Wind: -- km/h | Peak Gusts: -- km/h | 24h Rain: -- mm</div>
                         <div class="text-[10px] text-slate-500 font-sans mt-0.5">IMD / NDMA 4-Tier Protocol</div>
                     </div>
                     <button 
@@ -374,7 +371,7 @@
             <!-- Wind Velocity & Direction -->
             <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
                 <div class="flex items-center justify-between text-slate-500 border-b border-slate-100 pb-2 mb-2.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Wind Velocity (10m)</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Sustained Wind (10m)</span>
                     <i data-lucide="wind" class="w-4 h-4 text-blue-800"></i>
                 </div>
                 <div class="flex items-baseline space-x-1.5">
@@ -401,7 +398,8 @@
                     <span class="text-slate-600 font-semibold text-sm">mm</span>
                 </div>
                 <div class="mt-2 text-xs text-slate-600 flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span>Cumulative Total: <strong id="dailyRainValue" class="font-mono text-slate-800">-- mm</strong></span>
+                    <span>24h Total: <strong id="dailyRainValue" class="font-mono text-slate-800">-- mm</strong></span>
+                    <span>Hourly Rate: <strong id="currentRainRateValue" class="font-mono text-slate-800">-- mm/h</strong></span>
                 </div>
                 <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
                     <span>Rainfall Intensity:</span>
@@ -492,16 +490,16 @@
                 </div>
             </div>
 
-            <!-- Panel 2: Marine & Coastal Fishermen Directive -->
-            <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+            <!-- Panel 2 (Coastal): Marine & Coastal Fishermen Directive -->
+            <div id="marineCard" class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
                 <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
                     <div class="flex items-center space-x-2.5">
                         <div class="p-1.5 rounded bg-blue-100 text-blue-900 border border-blue-200">
                             <i data-lucide="anchor" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-900 text-sm">Marine & Fishermen Coastal Directive</h3>
-                            <p class="text-xs text-slate-500">INCOIS & IMD Coastal Safety Protocols</p>
+                            <h3 class="font-bold text-slate-900 text-sm">Marine &amp; Fishermen Coastal Directive</h3>
+                            <p class="text-xs text-slate-500">INCOIS &amp; IMD Coastal Safety Protocols</p>
                         </div>
                     </div>
                     <span id="coastalVentureBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -514,7 +512,7 @@
                     <div class="bg-slate-50 p-3 rounded border border-slate-200">
                         <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
                             <i data-lucide="compass" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Sea State & Coastal Squall Condition
+                            Sea State &amp; Coastal Squall Condition
                         </div>
                         <p id="coastalSeaState" class="text-slate-700 leading-relaxed">
                             Loading maritime observations...
@@ -525,7 +523,7 @@
                     <div class="bg-slate-50 p-3 rounded border border-slate-200">
                         <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
                             <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-blue-800"></i>
-                            Deep-Sea & Artisanal Venturing Clearance
+                            Deep-Sea &amp; Artisanal Venturing Clearance
                         </div>
                         <p id="coastalDirective" class="text-slate-700 leading-relaxed">
                             Loading fishermen safety guidelines...
@@ -536,7 +534,7 @@
                     <div class="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
                         <div>
                             <span class="text-slate-500">Classification:</span>
-                            <strong id="coastalFlagText" class="text-slate-800 ml-1">Inland District</strong>
+                            <strong id="coastalFlagText" class="text-slate-800 ml-1">Coastal Marine Belt</strong>
                         </div>
                         <div>
                             <span class="text-slate-500">Maritime Authority:</span>
@@ -547,7 +545,88 @@
 
                 <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
                     <span>Maritime Protocol: <strong>Bay of Bengal / Arabian Sea Matrix</strong></span>
-                    <span class="text-blue-900 font-semibold">Port & Coast Guard Clearance</span>
+                    <span class="text-blue-900 font-semibold">Port &amp; Coast Guard Clearance</span>
+                </div>
+            </div>
+
+            <!-- Panel 2 (Inland Alternative): Urban & Surface Transport / Infrastructure Advisory -->
+            <div id="urbanCard" class="hidden bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between rounded-t-lg">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-1.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200">
+                            <i data-lucide="building-2" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm">Urban &amp; Surface Transport / Infrastructure Advisory</h3>
+                            <p class="text-xs text-slate-500">NDMA &amp; MoRTH Civil Protection Protocols</p>
+                        </div>
+                    </div>
+                    <span id="urbanStatusBadge" class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        NORMAL TRANSIT
+                    </span>
+                </div>
+
+                <div class="p-4 space-y-3.5 flex-grow text-xs sm:text-sm">
+                    <!-- Road Visibility & Transit Precaution -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="car" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Road Visibility &amp; Surface Traffic Precautions
+                        </div>
+                        <p id="urbanVisibilityDesc" class="text-slate-700 leading-relaxed">
+                            Loading transport guidelines...
+                        </p>
+                    </div>
+
+                    <!-- Waterlogging & Underpass Drainage -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="droplet-off" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Waterlogging &amp; Low-Lying Underpass Drainage
+                        </div>
+                        <p id="urbanWaterloggingDesc" class="text-slate-700 leading-relaxed">
+                            Loading urban drainage status...
+                        </p>
+                    </div>
+
+                    <!-- Power-Line, Overhead Cables & Wind Safety -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Power-Line, Overhead Cables &amp; Wind Safety
+                        </div>
+                        <p id="urbanWindSafetyDesc" class="text-slate-700 leading-relaxed">
+                            Loading infrastructure safety advice...
+                        </p>
+                    </div>
+
+                    <!-- Heat-Stress & Public Transit Precautions -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5 mb-1">
+                            <i data-lucide="thermometer-sun" class="w-3.5 h-3.5 text-blue-800"></i>
+                            Heat-Stress &amp; Public Transit Precautions
+                        </div>
+                        <p id="urbanHeatStressDesc" class="text-slate-700 leading-relaxed">
+                            Loading public health precautions...
+                        </p>
+                    </div>
+
+                    <!-- Inland Geographic Classification Status -->
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="text-slate-500">Classification:</span>
+                            <strong id="urbanZoneText" class="text-slate-800 ml-1">Landlocked / Inland District</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-500">Civil Authority:</span>
+                            <strong class="text-indigo-900 ml-1">NDMA / State Disaster Management</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center rounded-b-lg">
+                    <span>Infrastructure Protocol: <strong>Urban Disaster &amp; Surface Transit Matrix</strong></span>
+                    <span class="text-indigo-900 font-semibold">Municipal &amp; Civil Defense Cleared</span>
                 </div>
             </div>
 
@@ -853,7 +932,7 @@
             </div>
 
             <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500">
-                <p>© 2026 India Meteorological Department (IMD) / Ministry of Earth Sciences, Govt. of India. All Rights Reserved.</p>
+                <p>© 2026 WeatherGPT Decision Support Prototype (SIH26068) — Powered by Open-Meteo Telemetry &amp; IMD/NDMA Rule Protocols.</p>
                 <p>Autonomous Meteorological Rule-Based Decision Support System</p>
             </div>
         </div>
@@ -2204,44 +2283,54 @@
             const alert = data.alert;
             const agro = data.agro_advisory;
             const coastal = data.coastal_advisory;
+            const urban = data.urban_advisory || {};
             const multi = data.multilingual;
+            const lang = currentLanguage || "en";
 
             // 1. Update Key Meteorological Metric Grid
             document.getElementById("tempValue").textContent = telemetry.temperature_c.toFixed(1);
             document.getElementById("apparentTempValue").textContent = `${telemetry.apparent_temperature_c.toFixed(1)}°C`;
             document.getElementById("conditionTag").textContent = telemetry.condition;
             
+            // Sustained Wind (10m) & Peak Gusts
             document.getElementById("windSpeedValue").textContent = telemetry.wind_speed_kmh.toFixed(1);
             document.getElementById("windGustsValue").textContent = `${telemetry.wind_gusts_kmh.toFixed(1)} km/h`;
             document.getElementById("windDirValue").textContent = `${telemetry.wind_direction_deg}°`;
             
-            document.getElementById("precipValue").textContent = telemetry.precipitation_mm.toFixed(1);
-            document.getElementById("dailyRainValue").textContent = `${telemetry.daily_rain_total_mm.toFixed(1)} mm`;
+            // 24h Precipitation & Accumulation Synchronization
+            const rain24h = (telemetry.daily_rain_total_mm !== undefined && telemetry.daily_rain_total_mm !== null) 
+                ? telemetry.daily_rain_total_mm 
+                : telemetry.precipitation_mm;
+            document.getElementById("precipValue").textContent = rain24h.toFixed(1);
+            const dailyRainEl = document.getElementById("dailyRainValue");
+            if (dailyRainEl) dailyRainEl.textContent = `${rain24h.toFixed(1)} mm`;
+            const currentRateEl = document.getElementById("currentRainRateValue");
+            if (currentRateEl) currentRateEl.textContent = `${telemetry.precipitation_mm.toFixed(1)} mm/h`;
             
-            // Rainfall Intensity Label
+            // Rainfall Intensity Label strictly synced with 24h precipitation
             const rainIntensity = document.getElementById("rainIntensityTag");
-            if (telemetry.daily_rain_total_mm >= 64.5 || telemetry.precipitation_mm >= 64.5) {
-                rainIntensity.textContent = "Extremely Heavy / Flooding";
+            if (rain24h >= 64.5) {
+                rainIntensity.textContent = "Heavy Rain (>64.5 mm)";
                 rainIntensity.className = "font-bold text-red-700 text-[11px]";
-            } else if (telemetry.daily_rain_total_mm >= 35.5 || telemetry.precipitation_mm >= 35.5) {
-                rainIntensity.textContent = "Heavy Rain";
-                rainIntensity.className = "font-bold text-orange-700 text-[11px]";
-            } else if (telemetry.daily_rain_total_mm >= 15.5 || telemetry.precipitation_mm >= 15.5) {
-                rainIntensity.textContent = "Moderate Rain";
+            } else if (rain24h >= 15.6) {
+                rainIntensity.textContent = "Moderate Rain (15.6–64.4 mm)";
                 rainIntensity.className = "font-bold text-amber-700 text-[11px]";
-            } else if (telemetry.daily_rain_total_mm > 0.0 || telemetry.precipitation_mm > 0.0) {
-                rainIntensity.textContent = "Light Rain / Drizzle";
-                rainIntensity.className = "font-semibold text-blue-800 text-[11px]";
-            } else {
-                rainIntensity.textContent = "Nil / Dry";
+            } else if (rain24h >= 2.5) {
+                rainIntensity.textContent = "Light/Moderate Rain (2.5–15.5 mm)";
+                rainIntensity.className = "font-semibold text-blue-700 text-[11px]";
+            } else if (rain24h >= 0.1) {
+                rainIntensity.textContent = "Very Light Rain (0.1–2.4 mm)";
                 rainIntensity.className = "font-semibold text-slate-700 text-[11px]";
+            } else {
+                rainIntensity.textContent = "No Rain (0.0 mm)";
+                rainIntensity.className = "font-semibold text-slate-500 text-[11px]";
             }
 
             document.getElementById("humidityValue").textContent = telemetry.humidity_percent;
             document.getElementById("coastalTag").textContent = data.coastal_proximity;
             document.getElementById("stationCityState").textContent = `${data.city}, ${data.state}`;
 
-            // 2. Update IMD 4-Tier Disaster Warning Matrix
+            // 2. Update IMD 4-Tier Disaster Warning Matrix & Synchronized Threshold Triggers
             const alertBanner = document.getElementById("alertBanner");
             const alertBadge = document.getElementById("alertBadge");
             const alertTitle = document.getElementById("alertTitle");
@@ -2254,7 +2343,8 @@
             alertTitle.textContent = multi.alert_title;
             alertInstruction.textContent = multi.alert_instructions;
             alertHazard.textContent = `IMD Hazard: ${alert.hazard_type}`;
-            alertTriggers.textContent = `Wind: ${alert.wind_trigger_val} km/h | Rain: ${alert.rain_trigger_val} mm`;
+            // Synchronized Live Telemetry Figures in Threshold Trigger Box
+            alertTriggers.textContent = `Sustained Wind: ${telemetry.wind_speed_kmh.toFixed(1)} km/h | Peak Gusts: ${telemetry.wind_gusts_kmh.toFixed(1)} km/h | 24h Rain: ${rain24h.toFixed(1)} mm`;
             alertBadge.textContent = alert.badge_text;
 
             // Apply Crisp Government Alert Badges & Borders
@@ -2304,32 +2394,92 @@
                 sprayBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
             }
 
-            const lang = currentLanguage;
             document.getElementById("agroSprayDesc").textContent = 
                 lang === 'hi' ? agro.spraying_desc_hi : agro.spraying_desc_en;
             document.getElementById("agroIrrigationDesc").textContent = 
                 lang === 'hi' ? agro.irrigation_hi : agro.irrigation_en;
-            document.getElementById("agroHarvestDesc").textContent = 
-                lang === 'hi' ? (agro.harvesting_hi || agro.harvest_hi) : (agro.harvesting_en || agro.harvest_en);
 
-            // 4. Coastal & Marine Fishermen Advisory
-            const ventureBadge = document.getElementById("coastalVentureBadge");
-            ventureBadge.textContent = coastal.status;
-            if (coastal.status === "SAFE") {
-                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
-            } else if (coastal.status === "CAUTION") {
-                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
-            } else if (coastal.status === "WARNING") {
-                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300";
-            } else {
-                ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
+            // Strict Harvesting Rule: NEVER show favorable when alert is YELLOW/ORANGE/RED, or rain > 0 mm, or humidity > 80%
+            const isAdverseAgro = (
+                (alert.level && ["YELLOW", "ORANGE", "RED"].includes(alert.level.toUpperCase())) ||
+                telemetry.precipitation_mm > 0.0 ||
+                rain24h > 0.0 ||
+                telemetry.humidity_percent > 80
+            );
+
+            let harvestTextEn = agro.harvesting_en || agro.harvest_en;
+            let harvestTextHi = agro.harvesting_hi || agro.harvest_hi;
+
+            if (isAdverseAgro) {
+                harvestTextEn = "STRICTLY AVOID HARVESTING & SUN-DRYING: High moisture and squall risk; cover harvested produce with waterproof tarpaulins immediately.";
+                harvestTextHi = "कटाई एवं धूप में सुखाने से पूरी तरह बचें: अत्यधिक नमी व आंधी का ख़तरा; कटी फसलों को तुरंत वाटरप्रूफ तिरपाल से सुरक्षित ढकें।";
+            } else if (!harvestTextEn || harvestTextEn.includes("AVOID")) {
+                harvestTextEn = "Atmospheric conditions favorable for harvesting, threshing, sun-drying, and storage.";
+                harvestTextHi = "फसल कटाई, मड़ाई एवं धूप में सुखाने के लिए मौसम पूरी तरह अनुकूल है।";
             }
 
-            document.getElementById("coastalSeaState").textContent = 
-                lang === 'hi' ? coastal.sea_state_hi : coastal.sea_state_en;
-            document.getElementById("coastalDirective").textContent = 
-                lang === 'hi' ? coastal.advisory_hi : coastal.advisory_en;
-            document.getElementById("coastalFlagText").textContent = data.is_coastal ? `Coastal Marine Belt (${data.state})` : `Inland District (${data.state})`;
+            document.getElementById("agroHarvestDesc").textContent = 
+                lang === 'hi' ? harvestTextHi : harvestTextEn;
+
+            // 4. Conditional Geographic Card (Coastal vs. Inland Districts)
+            const isCoastal = Boolean(data.is_coastal);
+            const marineCard = document.getElementById("marineCard");
+            const urbanCard = document.getElementById("urbanCard");
+
+            if (isCoastal) {
+                if (marineCard) marineCard.classList.remove("hidden");
+                if (urbanCard) urbanCard.classList.add("hidden");
+
+                const ventureBadge = document.getElementById("coastalVentureBadge");
+                ventureBadge.textContent = coastal.status;
+                if (coastal.status === "SAFE") {
+                    ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
+                } else if (coastal.status === "CAUTION") {
+                    ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
+                } else if (coastal.status === "WARNING") {
+                    ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300";
+                } else {
+                    ventureBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
+                }
+
+                document.getElementById("coastalSeaState").textContent = 
+                    lang === 'hi' ? coastal.sea_state_hi : coastal.sea_state_en;
+                document.getElementById("coastalDirective").textContent = 
+                    lang === 'hi' ? coastal.advisory_hi : coastal.advisory_en;
+                document.getElementById("coastalFlagText").textContent = `Coastal Marine Belt (${data.state})`;
+            } else {
+                if (marineCard) marineCard.classList.add("hidden");
+                if (urbanCard) urbanCard.classList.remove("hidden");
+
+                const urbanBadge = document.getElementById("urbanStatusBadge");
+                if (urbanBadge) {
+                    urbanBadge.textContent = urban.status || "NORMAL TRANSIT";
+                    if ((urban.status || "").includes("CRITICAL") || alert.level === "RED") {
+                        urbanBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800 border border-red-300";
+                    } else if ((urban.status || "").includes("HIGH") || alert.level === "ORANGE") {
+                        urbanBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-300";
+                    } else if ((urban.status || "").includes("CAUTION") || alert.level === "YELLOW") {
+                        urbanBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300";
+                    } else {
+                        urbanBadge.className = "px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300";
+                    }
+                }
+
+                const uvDesc = document.getElementById("urbanVisibilityDesc");
+                if (uvDesc) uvDesc.textContent = lang === 'hi' ? (urban.visibility_hi || "सड़क दृश्यता सामान्य।") : (urban.visibility_en || "Optimal road visibility.");
+
+                const uwDesc = document.getElementById("urbanWaterloggingDesc");
+                if (uwDesc) uwDesc.textContent = lang === 'hi' ? (urban.waterlogging_hi || "जलभराव का कोई ख़तरा नहीं।") : (urban.waterlogging_en || "Zero waterlogging hazard detected.");
+
+                const uwsDesc = document.getElementById("urbanWindSafetyDesc");
+                if (uwsDesc) uwsDesc.textContent = lang === 'hi' ? (urban.wind_safety_hi || "विद्युत अवसंरचना एवं तार सुरक्षित।") : (urban.wind_safety_en || "Stable wind profile.");
+
+                const uhDesc = document.getElementById("urbanHeatStressDesc");
+                if (uhDesc) uhDesc.textContent = lang === 'hi' ? (urban.heat_stress_hi || "तापमान एवं मौसम अनुकूल।") : (urban.heat_stress_en || "Thermal conditions within comfortable thresholds.");
+
+                const uzText = document.getElementById("urbanZoneText");
+                if (uzText) uzText.textContent = `Landlocked / Inland District (${data.state})`;
+            }
 
             // 5. Official Monospace Synthesized Bulletin
             document.getElementById("conversationalBox").textContent = multi.narrative;

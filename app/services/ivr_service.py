@@ -537,7 +537,9 @@ class TwilioIVRService:
                         precipitation=weather_data.get("precipitation_mm", 12.0),
                         humidity=weather_data.get("humidity_percent", 65),
                         temp=weather_data.get("temperature_c", 28.5),
-                        weather_code=weather_data.get("weather_code", 0)
+                        weather_code=weather_data.get("weather_code", 0),
+                        alert_level=hazard_data["level"] if hazard_data else "GREEN",
+                        daily_rain=weather_data.get("daily_rain_total_mm", 12.0)
                     )
                     marine = compute_marine_advisory(
                         wind_speed=weather_data.get("wind_speed_kmh", 18.0),

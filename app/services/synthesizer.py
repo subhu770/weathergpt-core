@@ -6,7 +6,7 @@ Deterministically generates official administrative bulletins and TTS audio scri
 in English and Hindi (हिन्दी) without LLM hallucination risk.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 # Official WMO (World Meteorological Organization) Code Interpretations
 WMO_INTERPRETATIONS: Dict[int, Dict[str, str]] = {
@@ -46,11 +46,13 @@ def synthesize_bulletin(
     hazard: Dict[str, Any],
     agro: Dict[str, Any],
     marine: Dict[str, Any],
-    language: str = "en"
+    language: str = "en",
+    urban: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Synthesize high-fidelity administrative bulletins and TTS audio scripts
     based strictly on deterministic meteorological ground truth.
+    Dynamically switches between Marine directive (coastal) and Urban & Surface Transport advisory (inland).
     """
     lang = language.lower()
     if lang in ["hi", "hindi"]:
@@ -62,6 +64,7 @@ def synthesize_bulletin(
     apparent_temp = metrics.get("apparent_temperature_c", 26.0)
     humidity = metrics.get("humidity_percent", 60)
     wind_spd = metrics.get("wind_speed_kmh", 10.0)
+    wind_gusts = metrics.get("wind_gusts_kmh", wind_spd)
     wind_dir = metrics.get("wind_direction_deg", 0)
     precip = metrics.get("precipitation_mm", 0.0)
     daily_rain = metrics.get("daily_rain_total_mm", 0.0)
@@ -69,6 +72,7 @@ def synthesize_bulletin(
 
     place_name = location_data.get("name", "Unknown Location")
     state_name = location_data.get("state", "India")
+    is_coastal = bool(location_data.get("is_coastal", False))
     condition_text = get_weather_description(weather_code, target_lang)
 
     # 1. HINDI SYNTHESIS (हिन्दी)
@@ -78,17 +82,40 @@ def synthesize_bulletin(
         agro_spray = agro["spraying_desc_hi"]
         agro_irr = agro["irrigation_hi"]
         agro_harv = agro.get("harvesting_hi", "")
-        marine_adv = marine["advisory_hi"]
-        marine_sea = marine["sea_state_hi"]
+
+        if is_coastal:
+            marine_adv = marine.get("advisory_hi", "")
+            marine_sea = marine.get("sea_state_hi", "")
+            geo_section = (
+                f"⚓ तटीय एवं मछुआरा सुरक्षा निर्देश:\n"
+                f"  • समुद्र की स्थिति: {marine_sea}\n"
+                f"  • दिशा-निर्देश: {marine_adv}\n"
+            )
+            geo_tts = f"मछुआरों के लिए निर्देश: {marine_adv}"
+        else:
+            u_data = urban or {}
+            u_vis = u_data.get("visibility_hi", "सड़क दृश्यता सामान्य।")
+            u_water = u_data.get("waterlogging_hi", "जलभराव का कोई ख़तरा नहीं।")
+            u_wind = u_data.get("wind_safety_hi", "अवसंरचना एवं बिजली तार सुरक्षित।")
+            u_heat = u_data.get("heat_stress_hi", "तापमान सामान्य।")
+            geo_section = (
+                f"🚦 शहरी एवं सड़क परिवहन / अवसंरचना सुरक्षा निर्देश (NDMA / MoRTH):\n"
+                f"  • सड़क दृश्यता एवं यातायात: {u_vis}\n"
+                f"  • जलभराव एवं अंडरपास स्थिति: {u_water}\n"
+                f"  • बिजली तार एवं संरचना सुरक्षा: {u_wind}\n"
+                f"  • लू / हीट-स्ट्रेस सावधानी: {u_heat}\n"
+            )
+            geo_tts = f"सड़क परिवहन सलाह: {u_vis} {u_water}"
 
         narrative = (
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  भारत मौसम विज्ञान विभाग (IMD) / पृथ्वी विज्ञान मंत्रालय (MoES)\n"
-            f"  आधिकारिक मौसम बुलेटिन एवं आपदा पूर्व-चेतावनी रिपोर्ट\n"
+            f"  WeatherGPT — मौसम परामर्श एवं आपदा पूर्व-चेतावनी रिपोर्ट\n"
+            f"  (IMD / NDMA Protocol Standard | SIH26068)\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
             f"📍 वेधशाला केंद्र: {place_name} ({state_name})\n"
             f"🌡️ तापमान: {temp:.1f}°C (महसूस: {apparent_temp:.1f}°C) | 💧 सापेक्षिक आर्द्रता: {humidity}%\n"
-            f"💨 सतही पवन: {wind_spd:.1f} km/h (दिशा: {wind_dir}°) | 🌧️ 24 घंटे की वर्षा: {precip:.1f} mm (कुल संचयी: {daily_rain:.1f} mm)\n"
+            f"💨 स्थिर सतही पवन (10m): {wind_spd:.1f} km/h | तेज झोंके: {wind_gusts:.1f} km/h (दिशा: {wind_dir}°)\n"
+            f"🌧️ 24 घंटे की कुल वर्षा: {daily_rain:.1f} mm (वर्तमान दर: {precip:.1f} mm/h)\n"
             f"☁️ वर्तमान वायुमंडलीय स्थिति: {condition_text}\n\n"
             f"🚨 आपदा चेतावनी स्तर: {alert_title}\n"
             f"📌 प्रशासनिक निर्देश: {alert_inst}\n\n"
@@ -96,19 +123,19 @@ def synthesize_bulletin(
             f"  • कीटनाशक एवं पोषण छिड़काव: {agro_spray}\n"
             f"  • सिंचाई एवं जल प्रबंधन: {agro_irr}\n"
             f"  • फसल कटाई एवं भंडारण: {agro_harv}\n\n"
-            f"⚓ तटीय एवं मछुआरा सुरक्षा निर्देश:\n"
-            f"  • समुद्र की स्थिति: {marine_sea}\n"
-            f"  • दिशा-निर्देश: {marine_adv}\n\n"
+            f"{geo_section}\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"प्रमाणीकरण: भारत मौसम विज्ञान विभाग स्वायत्त निर्णय प्रणाली (SIH26068)"
+            f"प्रमाणीकरण: WeatherGPT स्वायत्त निर्णय प्रणाली (IMD / NDMA Protocol Standard | SIH26068)"
         )
 
         tts_script = (
-            f"{place_name} {state_name} के लिए भारत मौसम विज्ञान विभाग का आधिकारिक बुलेटिन। "
+            f"{place_name} {state_name} के लिए WeatherGPT मौसम बुलेटिन। "
             f"वर्तमान तापमान {temp:.1f} डिग्री सेल्सियस है और स्थिति {condition_text} है। "
+            f"स्थिर पवन {wind_spd:.1f} किलोमीटर प्रति घंटा और तेज झोंके {wind_gusts:.1f} किलोमीटर प्रति घंटा हैं। "
+            f"24 घंटे की वर्षा {daily_rain:.1f} मिलीमीटर है। "
             f"आपदा चेतावनी स्तर {hazard['level']} है। {alert_inst} "
-            f"कृषि सलाह: {agro_spray} {agro_irr} "
-            f"मछुआरों के लिए निर्देश: {marine_adv}"
+            f"कृषि सलाह: {agro_spray} {agro_harv} "
+            f"{geo_tts}"
         )
 
     # 2. ENGLISH SYNTHESIS (Official Standard)
@@ -118,17 +145,40 @@ def synthesize_bulletin(
         agro_spray = agro["spraying_desc_en"]
         agro_irr = agro["irrigation_en"]
         agro_harv = agro.get("harvesting_en", "")
-        marine_adv = marine["advisory_en"]
-        marine_sea = marine["sea_state_en"]
+
+        if is_coastal:
+            marine_adv = marine.get("advisory_en", "")
+            marine_sea = marine.get("sea_state_en", "")
+            geo_section = (
+                f"⚓ Marine & Fishermen Directive (INCOIS / IMD Protocol):\n"
+                f"  • Sea State: {marine_sea}\n"
+                f"  • Maritime Clearance: {marine_adv}\n"
+            )
+            geo_tts = f"Marine directive: {marine_adv}"
+        else:
+            u_data = urban or {}
+            u_vis = u_data.get("visibility_en", "Optimal road visibility.")
+            u_water = u_data.get("waterlogging_en", "Zero waterlogging hazard detected.")
+            u_wind = u_data.get("wind_safety_en", "Stable wind profile.")
+            u_heat = u_data.get("heat_stress_en", "Thermal conditions within comfortable thresholds.")
+            geo_section = (
+                f"🚦 Urban & Surface Transport / Infrastructure Advisory (NDMA / MoRTH Protocol):\n"
+                f"  • Road Visibility & Transit: {u_vis}\n"
+                f"  • Waterlogging & Underpasses: {u_water}\n"
+                f"  • Power-Line & Wind Safety: {u_wind}\n"
+                f"  • Heat-Stress Precautions: {u_heat}\n"
+            )
+            geo_tts = f"Surface transport directive: {u_vis} {u_water}"
 
         narrative = (
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  INDIA METEOROLOGICAL DEPARTMENT (IMD) / MINISTRY OF EARTH SCIENCES\n"
-            f"  OFFICIAL METEOROLOGICAL BULLETIN & EARLY-WARNING ADVISORY\n"
+            f"  WeatherGPT — Meteorological Advisory & Decision Support System\n"
+            f"  (IMD / NDMA Protocol Standard | SIH26068)\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
             f"📍 Observatory Station: {place_name}, {state_name}\n"
             f"🌡️ Surface Temp: {temp:.1f}°C (Feels Like: {apparent_temp:.1f}°C) | 💧 Relative Humidity: {humidity}%\n"
-            f"💨 Wind Velocity: {wind_spd:.1f} km/h (Azimuth: {wind_dir}°) | 🌧️ 24h Rainfall: {precip:.1f} mm (Cumulative: {daily_rain:.1f} mm)\n"
+            f"💨 Sustained Wind (10m): {wind_spd:.1f} km/h | Peak Gusts: {wind_gusts:.1f} km/h (Azimuth: {wind_dir}°)\n"
+            f"🌧️ 24h Cumulative Rain: {daily_rain:.1f} mm (Current Rate: {precip:.1f} mm/h)\n"
             f"☁️ Sky Condition: {condition_text}\n\n"
             f"🚨 Disaster Alert Status: {alert_title}\n"
             f"📌 Operational Directive: {alert_inst}\n\n"
@@ -136,20 +186,29 @@ def synthesize_bulletin(
             f"  • Foliar/Pesticide Spray Window: {agro_spray}\n"
             f"  • Irrigation & Soil Drainage: {agro_irr}\n"
             f"  • Crop Harvest & Protection: {agro_harv}\n\n"
-            f"⚓ Marine & Fishermen Directive (INCOIS / IMD Protocol):\n"
-            f"  • Sea State: {marine_sea}\n"
-            f"  • Maritime Clearance: {marine_adv}\n\n"
+            f"{geo_section}\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"Authority: Autonomous Meteorological Decision Support System (SIH26068)"
+            f"Authority: WeatherGPT Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068)"
         )
 
         tts_script = (
-            f"Official IMD meteorological bulletin for {place_name}, {state_name}. "
+            f"Official WeatherGPT meteorological bulletin for {place_name}, {state_name}. "
             f"Current surface temperature is {temp:.1f} degrees Celsius with {condition_text}. "
+            f"Sustained wind is {wind_spd:.1f} kilometers per hour with peak gusts up to {wind_gusts:.1f} kilometers per hour. "
+            f"24-hour cumulative rainfall is {daily_rain:.1f} millimeters. "
             f"Disaster alert level is {hazard['level']}. {alert_inst} "
-            f"Agricultural directive: {agro_spray} {agro_irr} "
-            f"Marine directive: {marine_adv}"
+            f"Agricultural directive: {agro_spray} {agro_harv} "
+            f"{geo_tts}"
         )
+
+    return {
+        "language": target_lang,
+        "condition_text": condition_text,
+        "narrative": narrative,
+        "tts_script": tts_script,
+        "alert_title": alert_title,
+        "alert_instructions": alert_inst
+    }
 
     return {
         "language": target_lang,

@@ -5,7 +5,7 @@ and Bhashini Speech-to-Speech (ASR & TTS) integration.
 """
 
 from app.services.weather_service import weather_service, WeatherService, LocationNotFoundError
-from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory
+from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory, compute_urban_advisory
 from app.services.synthesizer import synthesize_bulletin, get_weather_description
 from app.services.bhashini_service import bhashini_service, BhashiniService
 from app.services.ivr_service import ivr_service, TwilioIVRService, send_emergency_sms
@@ -17,6 +17,7 @@ __all__ = [
     "evaluate_hazard_matrix",
     "compute_agro_advisory",
     "compute_marine_advisory",
+    "compute_urban_advisory",
     "synthesize_bulletin",
     "get_weather_description",
     "bhashini_service",

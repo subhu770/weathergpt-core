@@ -18,12 +18,42 @@ from app.config import settings
 
 logger = logging.getLogger("WeatherGPT.WeatherService")
 
-# Known coastal states, union territories, and coastal administrative regions in India
-COASTAL_REGIONS = {
-    "odisha", "orissa", "andhra pradesh", "west bengal", "tamil nadu",
-    "kerala", "karnataka", "goa", "maharashtra", "gujarat",
-    "puducherry", "pondicherry", "andaman and nicobar islands",
-    "lakshadweep", "daman and diu", "dadra and nagar haveli and daman and diu"
+# Validated list of coastal districts across Indian maritime states & Union Territories
+COASTAL_DISTRICTS = {
+    # Odisha
+    "puri", "kendrapara", "ganjam", "balasore", "baleswar", "jagatsinghpur", "bhadrak", "khordha", "khurda",
+    # Maharashtra
+    "mumbai", "mumbai city", "mumbai suburban", "thane", "palghar", "raigad", "ratnagiri", "sindhudurg",
+    # West Bengal
+    "south 24 parganas", "north 24 parganas", "purba medinipur", "east medinipur", "digha", "howrah",
+    # Andhra Pradesh
+    "visakhapatnam", "vizag", "srikakulam", "vizianagaram", "anakapalli", "kakinada", "konaseema",
+    "east godavari", "west godavari", "krishna", "bapatla", "prakasam", "nellore", "sri potti sriramulu nellore", "tirupati", "machilipatnam",
+    # Tamil Nadu
+    "chennai", "tiruvallur", "chengalpattu", "viluppuram", "cuddalore", "mayiladuthurai",
+    "nagapattinam", "tiruvarur", "thanjavur", "pudukkottai", "ramanathapuram", "thoothukudi", "tuticorin", "tirunelveli", "kanniyakumari",
+    # Kerala
+    "thiruvananthapuram", "trivandrum", "kollam", "alappuzha", "alleppey", "ernakulam", "kochi",
+    "cochin", "thrissur", "malappuram", "kozhikode", "calicut", "kannur", "kasaragod",
+    # Karnataka
+    "dakshina kannada", "mangalore", "mangaluru", "udupi", "uttara kannada", "karwar",
+    # Goa
+    "goa", "north goa", "south goa", "panaji", "vasco da gama", "margao",
+    # Gujarat
+    "kachchh", "kutch", "morbi", "jamnagar", "devbhumi dwarka", "dwarka", "porbandar",
+    "junagadh", "gir somnath", "somnath", "amreli", "bhavnagar", "anand", "bharuch", "surat", "navsari", "valsad",
+    # UTs & Islands
+    "puducherry", "pondicherry", "karaikal", "mahe", "yanam", "daman", "diu",
+    "lakshadweep", "kavaratti", "port blair", "andaman", "nicobar", "andaman and nicobar islands"
+}
+
+# Explicit inland district exclusions (even within maritime states)
+INLAND_DISTRICT_EXCLUSIONS = {
+    "cuttack", "pune", "nagpur", "delhi", "new delhi", "bhubaneswar", "nashik", "aurangabad",
+    "sambalpur", "kolkata", "bengaluru", "hyderabad", "lucknow", "jaipur", "ahmedabad", "patna",
+    "solapur", "kolhapur", "jalgaon", "amravati", "nanded", "sangli", "satara", "chandrapur",
+    "dhenkanal", "angul", "jajpur", "balangir", "bolangir", "bargarh", "jharsuguda", "sundargarh",
+    "mayurbhanj", "keonjhar", "kandhamal", "kalahandi", "koraput", "rayagada", "malkangiri", "nabarangpur"
 }
 
 COASTAL_KEYWORDS = {
@@ -66,19 +96,29 @@ class WeatherService:
         self._telemetry_cache: Dict[Tuple[float, float], Tuple[float, Dict[str, Any]]] = {}
 
     def _is_coastal_region(self, name: str, state: str, country: str) -> Tuple[bool, str]:
-        """Heuristically determine coastal classification and maritime proximity."""
-        full_text = f"{name} {state} {country}".lower()
-        
-        # Check keyword matches
-        if any(kw in full_text for kw in COASTAL_KEYWORDS):
-            return True, "Direct Coastal / Maritime Zone"
-            
-        # Check known coastal state/UT
-        state_clean = state.strip().lower().replace("orissa", "odisha")
-        for c_state in COASTAL_REGIONS:
-            if c_state in state_clean or state_clean in c_state:
-                return True, f"Coastal Belt ({state})"
-                
+        """Determine coastal classification and maritime proximity based on validated district rosters."""
+        name_clean = clean_diacritics(name).strip().lower()
+        state_clean = clean_diacritics(state).strip().lower()
+
+        # 1. Explicit inland exclusions take precedence (e.g., Cuttack, Pune, Nagpur, Delhi)
+        for inland in INLAND_DISTRICT_EXCLUSIONS:
+            if re.search(rf"\b{re.escape(inland)}\b", name_clean):
+                return False, "Inland Plains / Continental Zone"
+
+        # 2. Check explicit coastal districts
+        for coastal in COASTAL_DISTRICTS:
+            if re.search(rf"\b{re.escape(coastal)}\b", name_clean):
+                return True, f"Direct Coastal / Maritime Zone ({state.strip() or 'India'})"
+
+        # 3. Check explicit coastal keywords in place name (e.g. "port", "beach", "coast", "creek")
+        words = set(re.findall(r"\b\w+\b", name_clean))
+        if any(kw in words for kw in COASTAL_KEYWORDS):
+            return True, f"Direct Coastal / Maritime Zone ({state.strip() or 'India'})"
+
+        # 4. Islands / UT maritime zones
+        if any(island in state_clean for island in ["andaman", "nicobar", "lakshadweep", "daman", "diu", "puducherry"]):
+            return True, f"Coastal / Island Belt ({state.strip()})"
+
         return False, "Inland Plains / Continental Zone"
 
     async def _resolve_pincode_details(self, pincode: str, client: httpx.AsyncClient) -> Optional[Dict[str, str]]:

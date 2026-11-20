@@ -61,7 +61,12 @@ def evaluate_hazard_matrix(
         bg_color = "rgba(249, 115, 22, 0.15)"
         border_color = "#c2410c"
         badge_text = "HIGH ALERT / BE PREPARED"
-        hazard_type = "Squall Line, Gusty Gales & Heavy Downpour"
+        if max_rain >= 35.5 and max_wind >= 45.0:
+            hazard_type = "Squall Line, Gusty Gales & Heavy Downpour"
+        elif max_wind >= 45.0:
+            hazard_type = "Squall Line & Severe Gusty Gales Hazard"
+        else:
+            hazard_type = "Heavy Downpour & Flash Inundation Hazard"
         instructions_en = (
             "Significant risk to life and property. Secure loose rooftop structures, prepare emergency disaster kits "
             "(potable water, torch, medical kit), and avoid non-essential travel."
@@ -80,11 +85,14 @@ def evaluate_hazard_matrix(
         bg_color = "rgba(245, 158, 11, 0.15)"
         border_color = "#b45309"
         badge_text = "WATCH / BE UPDATED"
-        hazard_type = (
-            "Severe Heatwave Stress (>40°C)"
-            if temp >= 40.0
-            else "Moderate Thunderstorm, Rain & Localized Wind Gusts"
-        )
+        if temp >= 40.0:
+            hazard_type = "Severe Heatwave Stress (>40°C)"
+        elif max_rain >= 15.5:
+            hazard_type = "Moderate Thunderstorm, Rain & Localized Inundation"
+        elif weather_code in [95, 96, 99]:
+            hazard_type = "Thunderstorm & Localized Squalls"
+        else:
+            hazard_type = "Moderate Surface Wind Gusts & Squalls"
         instructions_en = (
             "Weather conditions may deteriorate. Track official IMD weather bulletins. "
             "Farmers, coastal workers, and commuters should exercise vigilance."
@@ -123,8 +131,9 @@ def evaluate_hazard_matrix(
         "hazard_type": hazard_type,
         "instructions_en": instructions_en,
         "instructions_hi": instructions_hi,
-        "wind_trigger_val": round(max_wind, 1),
-        "rain_trigger_val": round(max_rain, 1)
+        "wind_trigger_val": round(wind_speed, 1),
+        "gust_trigger_val": round(wind_gusts, 1),
+        "rain_trigger_val": round(daily_rain, 1)
     }
 
 
@@ -133,25 +142,27 @@ def compute_agro_advisory(
     precipitation: float,
     humidity: float,
     temp: float,
-    weather_code: int
+    weather_code: int,
+    alert_level: str = "GREEN",
+    daily_rain: float = 0.0
 ) -> Dict[str, Any]:
     """
     Agro-Meteorological Directive Engine (GKMS / ICAR / IMD Protocols):
     - Spraying Safety: Wind < 15 km/h & Rain <= 0.5 mm
     - Irrigation Management: Suspend on Rain >= 10 mm; Micro-irrigate on Temp >= 38°C
-    - Harvesting: Expedite if Rain > 15 mm or Wind > 35 km/h
+    - Harvesting: Strictly avoid during adverse conditions (YELLOW/ORANGE/RED, Rain > 0 mm, Humidity > 80%)
     """
     # 1. Chemical Spraying Window Evaluation
     if wind_speed > 15.0 and precipitation > 0.5:
         spraying_status = "UNSAFE"
         spraying_color = "#ef4444"
-        spraying_desc_en = f"Unsafe Window (Wind: {wind_speed:.1f} km/h, Rain: {precipitation:.1f} mm) — High chemical drift and wash-off risk."
-        spraying_desc_hi = f"असुरक्षित (हवा: {wind_speed:.1f} km/h, वर्षा: {precipitation:.1f} mm) — कीटनाशक बहने एवं बिखरने का भारी जोखिम।"
+        spraying_desc_en = f"Unsafe Window (Sustained Wind: {wind_speed:.1f} km/h, Rain: {precipitation:.1f} mm) — High chemical drift and wash-off risk."
+        spraying_desc_hi = f"असुरक्षित (स्थिर पवन: {wind_speed:.1f} km/h, वर्षा: {precipitation:.1f} mm) — कीटनाशक बहने एवं बिखरने का भारी जोखिम।"
     elif wind_speed > 15.0:
         spraying_status = "CAUTION"
         spraying_color = "#f59e0b"
-        spraying_desc_en = f"Caution (Wind: {wind_speed:.1f} km/h > 15 km/h limit) — Spray drift risk; postpone foliar pesticide applications."
-        spraying_desc_hi = f"सावधानी (हवा: {wind_speed:.1f} km/h > 15 km/h) — कीटनाशक हवा में उड़ने का ख़तरा; छिड़काव स्थगित रखें।"
+        spraying_desc_en = f"Caution (Sustained Wind: {wind_speed:.1f} km/h > 15 km/h limit) — Spray drift risk; postpone foliar pesticide applications."
+        spraying_desc_hi = f"सावधानी (स्थिर पवन: {wind_speed:.1f} km/h > 15 km/h) — कीटनाशक हवा में उड़ने का ख़तरा; छिड़काव स्थगित रखें।"
     elif precipitation > 0.5:
         spraying_status = "UNSAFE"
         spraying_color = "#ef4444"
@@ -160,11 +171,11 @@ def compute_agro_advisory(
     else:
         spraying_status = "OPTIMAL"
         spraying_color = "#10b981"
-        spraying_desc_en = f"Optimal Window (Wind: {wind_speed:.1f} km/h, Dry canopy) — Ideal conditions for foliar nutrients and pest control."
-        spraying_desc_hi = f"उत्तम समय (शांत हवा {wind_speed:.1f} km/h, सूखा मौसम) — कीटनाशक एवं पोषण छिड़काव के लिए अनुकूल समय।"
+        spraying_desc_en = f"Optimal Window (Sustained Wind: {wind_speed:.1f} km/h, Dry canopy) — Ideal conditions for foliar nutrients and pest control."
+        spraying_desc_hi = f"उत्तम समय (शांत पवन {wind_speed:.1f} km/h, सूखा मौसम) — कीटनाशक एवं पोषण छिड़काव के लिए अनुकूल समय।"
 
     # 2. Irrigation Directive
-    if precipitation >= 10.0:
+    if precipitation >= 10.0 or daily_rain >= 15.0:
         irrigation_en = "Suspend field irrigation immediately. Ensure proper drainage channels to prevent root hypoxia and waterlogging."
         irrigation_hi = "सिंचाई तुरंत रोकें। खेतों से अतिरिक्त जल निकासी की व्यवस्था करें ताकि फसलों में जलभराव न हो।"
     elif temp >= 38.0:
@@ -175,9 +186,20 @@ def compute_agro_advisory(
         irrigation_hi = "सामान्य नमी स्तर। फसल की आवश्यकतानुसार नियमित अंतराल पर सिंचाई जारी रखें।"
 
     # 3. Harvesting & Produce Protection
-    if precipitation > 15.0 or wind_speed > 35.0:
-        harvesting_en = "Harvest mature standing crops immediately and move grain to elevated, waterproof covered storage."
-        harvesting_hi = "पकी फसलों की तुरंत कटाई करें और अनाज को सुरक्षित, ऊँचे एवं ढके हुए गोदाम में रखें।"
+    # Rule: NEVER show "favorable for harvesting, threshing, sun-drying" when alert level is YELLOW, ORANGE, or RED,
+    # OR when precipitation > 0 mm (or daily_rain > 0 mm), OR when humidity > 80%.
+    is_adverse_harvest = (
+        alert_level.upper() in ["YELLOW", "ORANGE", "RED"]
+        or precipitation > 0.0
+        or daily_rain > 0.0
+        or humidity > 80.0
+        or wind_speed > 35.0
+        or weather_code in [80, 81, 82, 95, 96, 99]
+    )
+
+    if is_adverse_harvest:
+        harvesting_en = "STRICTLY AVOID HARVESTING & SUN-DRYING: High moisture and squall risk; cover harvested produce with waterproof tarpaulins immediately."
+        harvesting_hi = "कटाई एवं धूप में सुखाने से पूरी तरह बचें: अत्यधिक नमी व आंधी का ख़तरा; कटी फसलों को तुरंत वाटरप्रूफ तिरपाल से सुरक्षित ढकें।"
     else:
         harvesting_en = "Atmospheric conditions favorable for harvesting, threshing, sun-drying, and storage."
         harvesting_hi = "फसल कटाई, मड़ाई एवं धूप में सुखाने के लिए मौसम पूरी तरह अनुकूल है।"
@@ -208,35 +230,37 @@ def compute_marine_advisory(
     - Wind < 30 km/h: Safe for all maritime operations
     """
     max_wind = max(wind_speed, wind_gusts)
+    wind_label_en = f"Sustained: {wind_speed:.1f} km/h, Peak Gusts: {wind_gusts:.1f} km/h"
+    wind_label_hi = f"स्थिर पवन: {wind_speed:.1f} km/h, तेज झोंके: {wind_gusts:.1f} km/h"
 
     if max_wind >= 62.0:
         status = "CRITICAL HAZARD"
-        sea_state_en = f"Very Rough to Phenomenal Sea (Squalls >= 62 km/h, Recorded: {max_wind:.1f} km/h)"
-        sea_state_hi = f"अत्यंत अशांत एवं प्रचंड समुद्र (हवा >= 62 km/h, दर्ज: {max_wind:.1f} km/h)"
+        sea_state_en = f"Very Rough to Phenomenal Sea ({wind_label_en})"
+        sea_state_hi = f"अत्यंत अशांत एवं प्रचंड समुद्र ({wind_label_hi})"
         color = "#ef4444"
         venture_safe = False
         advisory_en = "TOTAL BAN ON SEA VENTURING. Fishermen are strictly advised NOT to venture into deep sea or coastal waters. Secure all mechanized boats ashore."
         advisory_hi = "समुद्र में जाने पर पूर्ण प्रतिबंध! मछुआरे गहरे समुद्र या तट के पास कतई न जाएँ। नावों को सुरक्षित स्थानों पर बाँधें।"
     elif max_wind >= 45.0:
         status = "WARNING"
-        sea_state_en = f"Rough to Very Rough Sea (Wind: {max_wind:.1f} km/h)"
-        sea_state_hi = f"अशांत समुद्र (हवा: {max_wind:.1f} km/h)"
+        sea_state_en = f"Rough to Very Rough Sea ({wind_label_en})"
+        sea_state_hi = f"अशांत समुद्र ({wind_label_hi})"
         color = "#f97316"
         venture_safe = False
         advisory_en = "HIGH RISK. Fishermen in deep sea are advised to return to harbor immediately. Artisanal and non-mechanized craft operations suspended."
         advisory_hi = "उच्च जोखिम। गहरे समुद्र में गए मछुआरे तत्काल तट पर लौट आएँ। छोटी नावों का परिचालन स्थगित रखें।"
     elif max_wind >= 30.0:
         status = "CAUTION"
-        sea_state_en = f"Moderate to Squally Conditions (Wind: {max_wind:.1f} km/h)"
-        sea_state_hi = f"मध्यम से तेज समुद्री हवाएँ ({max_wind:.1f} km/h)"
+        sea_state_en = f"Moderate to Squally Conditions ({wind_label_en})"
+        sea_state_hi = f"मध्यम से तेज समुद्री हवाएँ ({wind_label_hi})"
         color = "#eab308"
         venture_safe = True
         advisory_en = "EXERCISE CAUTION. Artisanal boat operators should stay close to coastline and avoid venturing into deep sea."
         advisory_hi = "सतर्कता बरतें। छोटी नाव चालक गहरे समुद्र में जाने से बचें एवं तट के निकट ही रहें।"
     else:
         status = "SAFE"
-        sea_state_en = f"Smooth to Slight Sea (Wind: {max_wind:.1f} km/h)"
-        sea_state_hi = f"शांत एवं अनुकूल समुद्र (हवा: {max_wind:.1f} km/h)"
+        sea_state_en = f"Smooth to Slight Sea ({wind_label_en})"
+        sea_state_hi = f"शांत एवं अनुकूल समुद्र ({wind_label_hi})"
         color = "#10b981"
         venture_safe = True
         advisory_en = "SAFE FOR FISHING. Sea conditions are calm and favorable for routine coastal and deep-sea operations."
@@ -251,4 +275,106 @@ def compute_marine_advisory(
         "advisory_en": advisory_en,
         "advisory_hi": advisory_hi,
         "is_coastal_region": is_coastal
+    }
+
+
+def compute_urban_advisory(
+    wind_speed: float,
+    wind_gusts: float,
+    precipitation: float,
+    daily_rain: float,
+    temp: float,
+    humidity: float,
+    weather_code: int,
+    alert_level: str = "GREEN"
+) -> Dict[str, Any]:
+    """
+    Urban & Surface Transport / Infrastructure Advisory Engine (NDMA / MoRTH Standards):
+    Designed for landlocked / inland districts where maritime directives are inapplicable.
+    Covers:
+    1. Road visibility & surface transit precautions
+    2. Urban waterlogging & underpass drainage
+    3. Power-line, overhead cables & structural wind safety
+    4. Heat-stress / public health precautions
+    """
+    max_wind = max(wind_speed, wind_gusts)
+    max_rain = max(precipitation, daily_rain)
+    level = alert_level.upper()
+
+    # Overall Urban Transit Status
+    if level == "RED" or max_wind >= 62.0 or max_rain >= 64.5:
+        status = "CRITICAL HAZARD"
+        color = "#ef4444"
+    elif level == "ORANGE" or max_wind >= 45.0 or max_rain >= 35.5:
+        status = "HIGH ALERT"
+        color = "#f97316"
+    elif level == "YELLOW" or max_wind >= 30.0 or max_rain >= 15.5 or temp >= 40.0:
+        status = "CAUTION"
+        color = "#eab308"
+    else:
+        status = "NORMAL TRANSIT"
+        color = "#10b981"
+
+    # 1. Road Visibility & Traffic Precautions
+    if weather_code in [45, 48]:
+        visibility_en = "Dense fog restricting surface visibility (< 200m). Use low-beam fog lamps, reduce highway speeds, and maintain safe braking distance."
+        visibility_hi = "घना कोहरा छाए रहने से दृश्यता अत्यंत कम (< 200 मी)। फॉग लैंप का उपयोग करें, गति धीमी रखें और वाहनों से सुरक्षित दूरी बनाए रखें।"
+    elif max_rain >= 35.5 or weather_code in [82, 95, 96, 99]:
+        visibility_en = "Intense torrential downpours causing sharp drop in road visibility and severe aquaplaning hazard. Delay non-essential road travel."
+        visibility_hi = "मूसलाधार बारिश से दृश्यता में भारी कमी एवं सड़कों पर तीव्र फिसलन का ख़तरा। गैर-जरूरी सड़क यात्रा टालने की सलाह है।"
+    elif max_rain > 0.0 or weather_code in [51, 53, 55, 61, 63, 65, 80, 81]:
+        visibility_en = f"Wet pavement and slick road surfaces (Recorded rain: {max_rain:.1f} mm). Exercise caution at turns and highway interchanges."
+        visibility_hi = f"सड़कें गीली एवं फिसलन भरी हैं (दर्ज वर्षा: {max_rain:.1f} mm)। मोड़ों एवं व्यस्त चौराहों पर सावधानीपूर्वक वाहन चलाएँ।"
+    else:
+        visibility_en = "Optimal road visibility and clear arterial corridors. Surface transit operating normally without atmospheric impediments."
+        visibility_hi = "सड़क दृश्यता उत्तम एवं स्पष्ट। सड़क यातायात बिना किसी मौसमी रुकावट के सामान्य रूप से संचालित है।"
+
+    # 2. Urban Waterlogging & Drainage
+    if max_rain >= 64.5:
+        waterlogging_en = f"Severe inundation risk (24h Rain: {max_rain:.1f} mm). Low-lying subway underpasses and basement parking vulnerable; avoid submerged roads."
+        waterlogging_hi = f"गंभीर जलभराव का ख़तरा (24 घंटे में वर्षा: {max_rain:.1f} mm)। निचले अंडरपास एवं बेसमेंट पार्किंग से बचें; जलमग्न मार्गों पर वाहन न ले जाएँ।"
+    elif max_rain >= 15.5:
+        waterlogging_en = "Localized water accumulation likely in low-lying corridors and poor drainage sectors. Municipal stormwater pumping recommended."
+        waterlogging_hi = "निचले इलाकों एवं खराब जल निकासी वाले चौराहों पर जलभराव संभव। वैकल्पिक मार्गों का प्रयोग करें और नगर निगम अलर्ट पर रहे।"
+    else:
+        waterlogging_en = "Zero waterlogging hazard detected. Stormwater channels and urban transit corridors flowing freely."
+        waterlogging_hi = "जलभराव का कोई ख़तरा नहीं। शहरी नालियां और मुख्य मार्ग पूरी तरह साफ़ एवं सुचारू हैं।"
+
+    # 3. Power-Line, Overhead Cables & Wind Safety
+    if wind_gusts >= 60.0 or wind_speed >= 45.0:
+        wind_safety_en = f"Gale-force squalls (Peak Gusts: {wind_gusts:.1f} km/h, Sustained: {wind_speed:.1f} km/h). Extreme hazard of snapped live wires and falling tree branches; keep clear of overhead lines."
+        wind_safety_hi = f"भीषण आंधी का ख़तरा (तेज झोंके: {wind_gusts:.1f} km/h, स्थिर पवन: {wind_speed:.1f} km/h)। बिजली के तार टूटने व पेड़ गिरने का अत्यधिक ख़तरा; बिजली खंभों से दूर रहें।"
+    elif wind_gusts >= 35.0 or wind_speed >= 25.0:
+        wind_safety_en = f"Gusty surface winds (Peak Gusts: {wind_gusts:.1f} km/h, Sustained: {wind_speed:.1f} km/h). Secure tin rooftops and loose roadside hoardings; avoid parking vehicles under fragile trees."
+        wind_safety_hi = f"तेज झोंकेदार हवाएँ (झोंके: {wind_gusts:.1f} km/h, स्थिर पवन: {wind_speed:.1f} km/h)। टिन शेड और साइनबोर्ड सुरक्षित करें; वाहनों को पुराने पेड़ों के नीचे खड़ा न करें।"
+    else:
+        wind_safety_en = f"Stable wind profile (Sustained: {wind_speed:.1f} km/h, Peak Gusts: {wind_gusts:.1f} km/h). Power transmission lines, telecom towers, and structural installations fully safe."
+        wind_safety_hi = f"सामान्य एवं शांत हवा (स्थिर: {wind_speed:.1f} km/h, झोंके: {wind_gusts:.1f} km/h)। विद्युत ग्रिड एवं संचार टावर पूरी तरह सुरक्षित हैं।"
+
+    # 4. Heat-Stress & Public Transit Precautions
+    if temp >= 40.0:
+        heat_stress_en = f"Severe heatwave stress ({temp:.1f}°C). High heatstroke risk; avoid direct sun exposure between 11 AM - 4 PM and maintain oral rehydration."
+        heat_stress_hi = f"तीव्र लू एवं हीटवेव की स्थिति ({temp:.1f}°C)। डिहाइड्रेशन व हीटस्ट्रोक से बचें, दोपहर 11 से 4 बजे धूप में न निकलें और ओआरएस/पानी पीते रहें।"
+    elif temp >= 35.0 and humidity >= 70:
+        heat_stress_en = f"Elevated sultriness (Temp: {temp:.1f}°C, Humidity: {humidity}%). High thermal discomfort; public transit commuters advised to stay well hydrated."
+        heat_stress_hi = f"अत्यधिक उमस व गर्मी (तापमान: {temp:.1f}°C, नमी: {humidity}%)। सार्वजनिक परिवहन यात्रियों को पर्याप्त पानी पीने और सतर्क रहने की सलाह।"
+    elif temp <= 8.0:
+        heat_stress_en = f"Cold-wave conditions ({temp:.1f}°C). Vulnerable groups and night commuters must wear layered thermal clothing."
+        heat_stress_hi = f"शीतलहर का प्रभाव ({temp:.1f}°C)। रात्रि यात्रियों एवं बच्चों/बुजुर्गों को गर्म व ऊनी कपड़े पहनने की सलाह है।"
+    else:
+        heat_stress_en = f"Surface thermal conditions within comfortable thresholds ({temp:.1f}°C, Humidity: {humidity}%). Safe for all routine urban commuting and outdoor activity."
+        heat_stress_hi = f"तापमान एवं मौसम अनुकूल ({temp:.1f}°C, नमी: {humidity}%)। सामान्य आवागमन एवं बाहरी कार्यों के लिए स्थिति पूरी तरह सुरक्षित है।"
+
+    return {
+        "status": status,
+        "color": color,
+        "visibility_en": visibility_en,
+        "visibility_hi": visibility_hi,
+        "waterlogging_en": waterlogging_en,
+        "waterlogging_hi": waterlogging_hi,
+        "wind_safety_en": wind_safety_en,
+        "wind_safety_hi": wind_safety_hi,
+        "heat_stress_en": heat_stress_en,
+        "heat_stress_hi": heat_stress_hi,
+        "is_urban_inland": True
     }

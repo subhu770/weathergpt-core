@@ -21,8 +21,9 @@ from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.services.weather_service import weather_service, LocationNotFoundError
-from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory
+from app.services.hazard_engine import evaluate_hazard_matrix, compute_agro_advisory, compute_marine_advisory, compute_urban_advisory
 from app.services.synthesizer import synthesize_bulletin
+from app.services.bhashini_service import bhashini_service
 from app.services.ivr_service import ivr_service
 from twilio.twiml.voice_response import VoiceResponse, Gather
 
@@ -744,7 +745,9 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
         precipitation=telemetry["precipitation_mm"],
         humidity=telemetry["humidity_percent"],
         temp=telemetry["temperature_c"],
-        weather_code=telemetry["weather_code"]
+        weather_code=telemetry["weather_code"],
+        alert_level=hazard_info["level"],
+        daily_rain=telemetry["daily_rain_total_mm"]
     )
 
     # 5. Coastal & Marine Fishermen Directives
@@ -755,6 +758,18 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
         is_coastal=location_data["is_coastal"]
     )
 
+    # 5b. Urban & Surface Transport / Infrastructure Advisory (Inland & Continental Districts)
+    urban_info = compute_urban_advisory(
+        wind_speed=telemetry["wind_speed_kmh"],
+        wind_gusts=telemetry["wind_gusts_kmh"],
+        precipitation=telemetry["precipitation_mm"],
+        daily_rain=telemetry["daily_rain_total_mm"],
+        temp=telemetry["temperature_c"],
+        humidity=telemetry["humidity_percent"],
+        weather_code=telemetry["weather_code"],
+        alert_level=hazard_info["level"]
+    )
+
     # 6. Multilingual Ground-Truth Bulletin Synthesis
     multilingual = synthesize_bulletin(
         location_data=location_data,
@@ -762,7 +777,8 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
         hazard=hazard_info,
         agro=agro_info,
         marine=marine_info,
-        language=payload.language
+        language=payload.language,
+        urban=urban_info
     )
 
     # 7. Assemble Production Response
@@ -796,8 +812,9 @@ async def process_meteorological_query(payload: WeatherQueryPayload):
         "alert": hazard_info,
         "agro_advisory": agro_info,
         "coastal_advisory": marine_info,
+        "urban_advisory": urban_info,
         "multilingual": multilingual,
-        "source": "Ministry of Earth Sciences (MoES) / IMD Deterministic Decision Engine"
+        "source": "WeatherGPT Decision Support Prototype (IMD / NDMA Protocol Standard | SIH26068)"
     }
 
     return response_payload
